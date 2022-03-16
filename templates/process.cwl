@@ -1,7 +1,7 @@
 #!/usr/bin/env cwl-runner
 cwlVersion: v1.0
 class: CommandLineTool
-baseCommand: [papermill, /home/jovyan/app.ipynb, output_nb.ipynb]
+baseCommand: [papermill, /home/jovyan/process.ipynb, output_nb.ipynb]
 hints:
   DockerRequirement:
     dockerPull: marjoluc/hello-world:stable

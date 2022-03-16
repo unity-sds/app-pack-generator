@@ -113,12 +113,11 @@ class Docker:
 			os.makedirs(workingdir)
 
 		# Repo2Docker call using the command line.
-		image_name = 'jenkins_image'
+		image_tag = GitHelper.GetTag(repodir)
 		process = Util.System(['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-			'--target-repo-dir', workingdir, '--no-run', '--debug', '--image-name', image_name, repodir])
+			'--target-repo-dir', workingdir, '--no-run', '--debug', '--image-name', image_tag, repodir])
 
 		# Save the newly created image to a tarball if the build succeeded.
-		tag = image_name#GitHelper.CommitHash(repodir)
 		docker_client = docker.from_env()
 		username = os.getenv('DOCKER_USER')
 		password = os.getenv('DOCKER_PASS')
@@ -126,13 +125,13 @@ class Docker:
 		
 		image = docker_client.images.get(image_name)
 		repo = 'jplzhan/ci-generated-images'
-		image.tag(repo, tag=tag)
-		for line in docker_client.api.push(repo, tag=tag, stream=True, decode=True):
+		image.tag(repo, tag=image_tag)
+		for line in docker_client.api.push(repo, tag=image_tag, stream=True, decode=True):
 			print(line)
 		docker_client.images.remove(image.id, force=True)
 		if process.stdout != '' or process.stderr == '':
-			return 'docker://' + repo + ':' + tag, process.stdout
-		return 'docker://' + repo + ':' + tag, process.stderr
+			return 'docker://' + repo + ':' + image_tag, process.stdout
+		return 'docker://' + repo + ':' + image_tag, process.stderr
 
 
 
@@ -145,7 +144,7 @@ class AppNB:
 		self.repodir = os.getcwd()
 		self.descriptor = {}
 		self.appcwl = {}
-		self.ParseAppCWL(os.path.join(templatedir, 'app.cwl'))
+		self.ParseAppCWL(os.path.join(templatedir, 'process.cwl'))
 		self.ParseDescriptor(os.path.join(templatedir, 'app_desc.json'))
 		self.ParseNotebook(nb_fname)
 
@@ -258,7 +257,7 @@ class AppNB:
 		commit_hash = GitHelper.CommitHash(self.repodir).strip()
 		split = url.split('/')
 		proc_dict = self.descriptor['processDescription']['process']
-		proc_dict['id'] = split[-2] + '/' + split[-1].strip()
+		proc_dict['id'] = split[-2] + '/' + split[-1].strip() + ':' + GitHelper.GetTag(self.repodir)
 		proc_dict['title'] = GitHelper.Message(self.repodir).strip()
 		proc_dict['owsContext']['offering']['content']['href'] = deposit_url + '/blob/main/' + commit_hash + '/process.cwl'
 		proc_dict['inputs'] = self.inputs
@@ -294,15 +293,9 @@ def main(args):
 
 	# Check if the build command was issued on its own line within the commit message.
 	print('Remote URL: ' + GitHelper.RemoteURL(directory))
-	msg = GitHelper.Message(directory)
-	found = False
-	for line in msg.split('\n'):
-		if line.strip() == '$build':
-			print('Build command issued. Now continuing...')
-			found = True
-			break
-	if not found:
-		print('No build command was issued. Now aborting...')
+	tag = GitHelper.GetTag(directory)
+	if tag.startswith('fatal: '):
+		print('No tag is associated with this commit. Now aborting...')
 		return 1
 
 	# Find the first Jupyter Notebook inside the directory.
