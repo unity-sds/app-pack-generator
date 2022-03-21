@@ -59,8 +59,8 @@ class GitHelper:
 		#git.Repo(localdir)
 		process = Util.System(['git', 'log', '-1', '--pretty=%B'])
 		if process.stdout != '':
-			return process.stdout
-		return process.stderr
+			return process.stdout.strip()
+		return process.stderr.strip()
 
 	@staticmethod
 	def CommitHash(repodir):
@@ -68,8 +68,8 @@ class GitHelper:
 		#git.Repo(localdir)
 		process = Util.System(['git', 'rev-parse', 'HEAD'])
 		if process.stdout != '':
-			return process.stdout
-		return process.stderr
+			return process.stdout.strip()
+		return process.stderr.strip()
 
 	@staticmethod
 	def RemoteURL(repodir, https=True):
@@ -80,8 +80,8 @@ class GitHelper:
 				process.stdout = process.stdout.strip()
 				process.stdout = process.stdout.replace(':', '/')
 				process.stdout = process.stdout.replace('git@', 'https://')
-			return process.stdout
-		return process.stderr
+			return process.stdout.strip()
+		return process.stderr.strip()
 
 	@staticmethod
 	def Push(repodir):
@@ -95,11 +95,10 @@ class GitHelper:
 	@staticmethod
 	def GetTag(repodir):
 		"""Gets the current repository tag associated with the current commit."""
-		commit_hash = GitHelper.CommitHash(repodir)
-		process = Util.System(['git', 'describe', '--tags', '--abbrev=0', commit_hash])
+		process = Util.System(['git', 'describe', '--tags', '--abbrev=0'])
 		if process.stdout != '':
-			return process.stdout
-		return process.stderr
+			return process.stdout.strip()
+		return process.stderr.strip()
 
 
 class Docker:
@@ -123,7 +122,7 @@ class Docker:
 		password = os.getenv('DOCKER_PASS')
 		docker_client.login(username=username, password=password)
 		
-		image = docker_client.images.get(image_name)
+		image = docker_client.images.get(image_tag)
 		repo = 'jplzhan/ci-generated-images'
 		image.tag(repo, tag=image_tag)
 		for line in docker_client.api.push(repo, tag=image_tag, stream=True, decode=True):
@@ -182,6 +181,7 @@ class AppNB:
 		jsonschema.validate(instance=self.notebook, schema=IPYNB_SCHEMA)
 		self.parameters = papermill.inspect_notebook(nb_fname)
 		self.inputs = list(self.parameters.keys())
+		print(self.parameters)
 		
 		for cell in self.notebook['cells']:
 			cell_type = cell['cell_type']
@@ -192,10 +192,10 @@ class AppNB:
 
 			if cell['cell_type'] == 'markdown':
 				if OUTPUT_TAG in tags:
-					self.outputs = [val for val in cell['source'] if val != '\n']
+					self.outputs = [val.strip() for val in cell['source'] if val != '\n']
 					self.outputs = list(collections.OrderedDict.fromkeys(self.outputs))
-					#print('outputs')
-					#print(self.outputs)
+					print('outputs')
+					print(self.outputs)
 
 	def Generate(self, outdir=os.path.join(os.getcwd(), '.generated/')):
 		"""Calls all of the Application Notebook generators.
@@ -230,6 +230,8 @@ class AppNB:
 					'valueFrom': key + ' "$(self)"'
 				},
 			}
+
+		self.appcwl['outputs'] = {}
 		output_dict = self.appcwl['outputs']
 		# TODO - Check for stem wildcards
 		for key, i in zip(self.outputs, range(1, len(self.outputs) + 1)):
@@ -254,14 +256,34 @@ class AppNB:
 			os.makedirs(outdir)
 		url = GitHelper.RemoteURL(self.repodir).replace('.git', '')
 		deposit_url = 'https://github.com/jplzhan/artifact-deposit-repo'
-		commit_hash = GitHelper.CommitHash(self.repodir).strip()
+		tag = GitHelper.GetTag(self.repodir)
 		split = url.split('/')
 		proc_dict = self.descriptor['processDescription']['process']
-		proc_dict['id'] = split[-2] + '/' + split[-1].strip() + ':' + GitHelper.GetTag(self.repodir)
+		proc_dict['id'] = split[-2] + '/' + split[-1].strip() + ':' + tag 
 		proc_dict['title'] = GitHelper.Message(self.repodir).strip()
-		proc_dict['owsContext']['offering']['content']['href'] = deposit_url + '/blob/main/' + commit_hash + '/process.cwl'
-		proc_dict['inputs'] = self.inputs
-		proc_dict['outputs'] = self.outputs
+		proc_dict['owsContext']['offering']['content']['href'] = deposit_url + '/blob/main/' + tag + '/process.cwl'
+		
+		proc_dict['inputs'] = []
+		for arg in self.inputs:
+			proc_dict['inputs'].append({
+				'id': arg,
+				'title': 'Automatically detected using papermill.',
+				'literalDataDomains': [{'dataType':{'name': 'string'}}], 
+			})
+		
+		
+		proc_dict['outputs'] = []
+		for arg in self.outputs:
+			proc_dict['outputs'].append({
+				'id': arg,
+				'title': 'Automatically detected from .ipynb parsing.',
+				'output': {
+					'formats':[
+						{'mimeType': 'text/*', 'default': True}
+					]
+				}
+			})
+		
 		self.descriptor['executionUnit'][0]['href'] = dockerurl
 
 		fname = os.path.join(outdir, 'applicationDescriptor.json')
@@ -295,17 +317,20 @@ def main(args):
 	print('Remote URL: ' + GitHelper.RemoteURL(directory))
 	tag = GitHelper.GetTag(directory)
 	if tag.startswith('fatal: '):
+		print(tag)
 		print('No tag is associated with this commit. Now aborting...')
 		return 1
+	print('Tag for this repository:', tag)
+	print('Commit for this repository:', GitHelper.CommitHash(directory))
 
 	# Find the first Jupyter Notebook inside the directory.
 	nb_fname = ''
 	for fname in os.listdir(args[1]):
-		if os.path.splitext(fname)[1] == '.ipynb':
+		if fname == 'process.ipynb':
 			nb_fname = os.path.join(args[1], fname)
 			break
 	if nb_fname == '':
-		print('No jupyter notebook was detected in the directory \'{}\'. Now aborting...' % (directory))
+		print('No process.ipynb was detected in the directory \'{}\'. Now aborting...' % (directory))
 		return 1
 
 	try:
