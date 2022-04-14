@@ -51,6 +51,20 @@ class Util:
 		time_diff = datetime.datetime.now() - start
 		return time_diff.total_seconds() * 1000, ret
 
+	@staticmethod
+	def GetKeyType(default_val):
+		"""Check if a given key's default value is a string or can be converted to a float."""
+		if default_val.find('"') != -1 or default_val.find('\'') != -1:
+			return 'string'
+		key_type = 'Any'
+		try:
+			temp = float(default_val)
+			key_type = 'float'
+		except ValueError:
+			pass
+		return key_type
+
+
 
 class GitHelper:
 	@staticmethod
@@ -114,7 +128,7 @@ class Docker:
 		# Repo2Docker call using the command line.
 		image_tag = GitHelper.GetTag(repodir)
 		process = Util.System(['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-			'--target-repo-dir', workingdir, '--no-run', '--debug', '--image-name', image_tag, repodir])
+			'--no-run', '--debug', '--image-name', image_tag, repodir])
 
 		# Save the newly created image to a tarball if the build succeeded.
 		docker_client = docker.from_env()
@@ -129,8 +143,8 @@ class Docker:
 			print(line)
 		docker_client.images.remove(image.id, force=True)
 		if process.stdout != '' or process.stderr == '':
-			return 'docker://' + repo + ':' + image_tag, process.stdout
-		return 'docker://' + repo + ':' + image_tag, process.stderr
+			return repo + ':' + image_tag, process.stdout
+		return repo + ':' + image_tag, process.stderr
 
 
 
@@ -222,10 +236,10 @@ class AppNB:
 		input_dict = self.appcwl['inputs']
 		for key, i in zip(self.inputs, range(1, len(self.inputs) + 1)):
 			input_dict[key] = {
-				'type': 'string',
+				'type': Util.GetKeyType(self.parameters[key]['default']),
 				'inputBinding': {
 					'position': i,
-					'shellQuote': 'false',
+					'shellQuote': False,
 					'prefix': '--parameters',
 					'valueFrom': key + ' "$(self)"'
 				},
@@ -264,18 +278,19 @@ class AppNB:
 		proc_dict['owsContext']['offering']['content']['href'] = deposit_url + '/blob/main/' + tag + '/process.cwl'
 		
 		proc_dict['inputs'] = []
-		for arg in self.inputs:
+		for key in self.inputs:
+			key_type = Util.GetKeyType(self.parameters[key]['default'])
 			proc_dict['inputs'].append({
-				'id': arg,
+				'id': key,
 				'title': 'Automatically detected using papermill.',
-				'literalDataDomains': [{'dataType':{'name': 'string'}}], 
+				'literalDataDomains': [{'dataType':{'name': key_type}}], 
 			})
 		
 		
 		proc_dict['outputs'] = []
-		for arg in self.outputs:
+		for key in self.outputs:
 			proc_dict['outputs'].append({
-				'id': arg,
+				'id': key,
 				'title': 'Automatically detected from .ipynb parsing.',
 				'output': {
 					'formats':[
@@ -284,7 +299,7 @@ class AppNB:
 				}
 			})
 		
-		self.descriptor['executionUnit'][0]['href'] = dockerurl
+		self.descriptor['executionUnit'][0]['href'] = 'docker://' + dockerurl
 
 		fname = os.path.join(outdir, 'applicationDescriptor.json')
 		with open(fname, 'w', encoding='utf-8') as f:
@@ -292,6 +307,7 @@ class AppNB:
 		return fname
 
 	def GenerateDockerImage(self, outdir=os.path.join(os.getcwd(), '.generated/')):
+		"""Generates the docker image associated with this repository."""
 		if not os.path.isdir(outdir):
 			os.makedirs(outdir)
 		dockerurl, output = Docker.Repo2Docker(self.repodir, outdir)
