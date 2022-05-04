@@ -129,6 +129,8 @@ class Docker:
 		image_tag = GitHelper.GetTag(repodir)
 		process = Util.System(['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
 			'--no-run', '--debug', '--image-name', image_tag, repodir])
+		print(process.stdout)
+		print(process.stderr)
 
 		# Save the newly created image to a tarball if the build succeeded.
 		docker_client = docker.from_env()
