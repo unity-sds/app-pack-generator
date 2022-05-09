@@ -63,8 +63,9 @@ class Util:
 
 
 def main(args):
-	repo = 'https://github.jpl.nasa.gov/zhan/algorithm-deposit-repo.git'
-	payload = {'repository': repo, 'checkout': 'HEAD'}
+	#repo = 'https://github.jpl.nasa.gov/zhan/algorithm-deposit-repo.git'
+	repo = 'https://github.com/jplzhan/algorithm-deposit-repo.git'
+	payload = {'repository': repo, 'checkout': 'downsample-landsat'}
 
 	server = jenkins.Jenkins(JENKINS_URL, username='zhan', password=USER_TOKEN)
 	server._session.verify = False

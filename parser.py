@@ -8,6 +8,7 @@ import jsonschema
 import os
 import papermill
 import requests
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -18,6 +19,7 @@ import yaml
 Loads the .ipynb jsonschema for validation purposes (TBD).
 """
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
+ARTIFACT_DIR = os.getenv('ARTIFACT_DIR')
 IPYNB_SCHEMA = {}
 SCHEMA_FNAME = os.path.join(LOCAL_PATH, 'schemas/nbformat.v4.schema.json')
 INPUT_TAG = 'parameters'
@@ -67,6 +69,34 @@ class Util:
 
 
 class GitHelper:
+	def __init__(self, url, dst=os.getcwd()):
+		"""Manages a freshly cloned git repository."""
+		self.repo = GitHelper.Clone(url, dst)
+		self.url = url
+		self.directory = dst
+
+		split = url.replace('.git', '').split('/')
+		self.owner = split[-2].strip()
+		self.name = split[-1].strip()
+		self.checkout = 'HEAD'
+		self.dirname = self.owner + '/' + self.name + '/' + self.checkout
+
+	def Checkout(self, arg):
+		"""Runs the checkout command on this repository.
+		
+		'arg' is either a commit hash, a tag, or a branch name.
+		"""
+		git = self.repo.git
+		git.checkout(arg)
+		self.checkout = arg
+		self.dirname = self.owner + '/' + self.name + '/' + self.checkout
+
+	@staticmethod
+	def Clone(repolink, dst=os.getcwd()):
+		"""Clones the specified repository using its HTTPS URL."""
+		print('Cloning to ' + dst + '...')
+		return git.Repo.clone_from(repolink, dst)
+
 	@staticmethod
 	def Message(repodir):
 		"""Return the commit message for the current commit."""
@@ -117,7 +147,7 @@ class GitHelper:
 
 class Docker:
 	@staticmethod
-	def Repo2Docker(repodir, workingdir=os.path.join(os.getcwd(), '.docker')):
+	def Repo2Docker(repo, workingdir=os.path.join(os.getcwd(), '.docker')):
 		"""Calls repo2docker on the local git directory to generate the Docker image.
 		
 		No further modifications are made to the docker image.
@@ -126,9 +156,12 @@ class Docker:
 			os.makedirs(workingdir)
 
 		# Repo2Docker call using the command line.
-		image_tag = GitHelper.GetTag(repodir)
+		image_tag = repo.owner + '.' + repo.name + '.' + repo.checkout
+		if len(image_tag) > 128:
+			image_tag = image_tag[0:128]
+
 		process = Util.System(['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-			'--no-run', '--debug', '--image-name', image_tag, repodir])
+			'--no-run', '--debug', '--image-name', image_tag, repo.directory])
 		print(process.stdout)
 		print(process.stderr)
 
@@ -152,16 +185,16 @@ class Docker:
 
 class AppNB:
 	"""Defines a parsed Jupyter Notebook read as a JSON file."""
-	def __init__(self, nb_fname, templatedir=os.path.join(LOCAL_PATH, 'templates')):
+	def __init__(self, repo, templatedir=os.path.join(LOCAL_PATH, 'templates')):
 		self.notebook = {}
 		self.inputs = []
 		self.outputs = []
-		self.repodir = os.getcwd()
+		self.repo = repo
 		self.descriptor = {}
 		self.appcwl = {}
 		self.ParseAppCWL(os.path.join(templatedir, 'process.cwl'))
 		self.ParseDescriptor(os.path.join(templatedir, 'app_desc.json'))
-		self.ParseNotebook(nb_fname)
+		self.ParseNotebook()
 
 	def ParseAppCWL(self, app_cwl_fname):
 		"""Loads the template application CWL."""
@@ -175,24 +208,23 @@ class AppNB:
 		with open(desc_fname, 'r') as f:
 			self.descriptor = json.load(f)
 
-	def ParseNotebook(self, nb_fname):
-		"""Should validate nb_fname as a valid, existing Jupyter Notebook to
+	def ParseNotebook(self):
+		"""Deduces the application notebook within the managed .
+		Should validate nb_fname as a valid, existing Jupyter Notebook to
 		ensure no exception is thrown.
 		"""
-		if not os.path.exists(nb_fname):
-			print('Error:', nb_fname, 'does not exist.')
-			return
-
-		if os.path.splitext(nb_fname)[1] != '.ipynb':
-			print('Error:', nb_fname, 'is not a file with extension .ipynb.')
-			return
-
+		# Find the first Jupyter Notebook inside the directory.
+		nb_fname = ''
+		for fname in os.listdir(self.repo.directory):
+			if fname == 'process.ipynb':
+				nb_fname = os.path.join(self.repo.directory, fname)
+				break
+		if nb_fname == '':
+			raise 'No process.ipynb was detected in the directory \'{}\'. Now aborting...' % (directory)
+		
 		print('Opening', nb_fname + '...')
-
-
 		with open(nb_fname, 'r') as f:
 			self.notebook = json.load(f)
-		self.repodir = os.path.dirname(nb_fname)
 		
 		jsonschema.validate(instance=self.notebook, schema=IPYNB_SCHEMA)
 		self.parameters = papermill.inspect_notebook(nb_fname)
@@ -270,13 +302,11 @@ class AppNB:
 		"""
 		if not os.path.isdir(outdir):
 			os.makedirs(outdir)
-		url = GitHelper.RemoteURL(self.repodir).replace('.git', '')
 		deposit_url = 'https://github.com/jplzhan/artifact-deposit-repo'
-		tag = GitHelper.GetTag(self.repodir)
-		split = url.split('/')
+		tag = self.repo.dirname
 		proc_dict = self.descriptor['processDescription']['process']
-		proc_dict['id'] = split[-2] + '/' + split[-1].strip() + ':' + tag 
-		proc_dict['title'] = GitHelper.Message(self.repodir).strip()
+		proc_dict['id'] = self.repo.owner + '/' + self.repo.name + ':' + self.repo.checkout 
+		proc_dict['title'] = GitHelper.Message(self.repo.directory).strip()
 		proc_dict['owsContext']['offering']['content']['href'] = deposit_url + '/blob/main/' + tag + '/process.cwl'
 		
 		proc_dict['inputs'] = []
@@ -287,7 +317,6 @@ class AppNB:
 				'title': 'Automatically detected using papermill.',
 				'literalDataDomains': [{'dataType':{'name': key_type}}], 
 			})
-		
 		
 		proc_dict['outputs'] = []
 		for key in self.outputs:
@@ -312,54 +341,66 @@ class AppNB:
 		"""Generates the docker image associated with this repository."""
 		if not os.path.isdir(outdir):
 			os.makedirs(outdir)
-		dockerurl, output = Docker.Repo2Docker(self.repodir, outdir)
+		dockerurl, output = Docker.Repo2Docker(self.repo, outdir)
 		print(output)
 		return dockerurl
 
 
 
 def main(args):
+	"""Accepts exactly 2 arguments (3 in total when including the script name):
+
+		1 - The HTTPS link to the repository which will be cloned.
+		2 - The identifier the repository will run 'git checkout' to.
+	"""
 	min_args = 3
 	if len(args) < min_args:
 		print('Not enough arguments (min. {}). Now aborting...' % (min_args))
 	original_dir = os.getcwd()
-	directory = os.path.abspath(args[1])
-	outputdir = os.path.abspath(args[2])
-	#algorithm = os.path.abspath(args[4])
+	repodir = os.path.join(original_dir, 'algorithm')
+	repolink = args[1]
+	checkout = args[2]
 
-	if not os.path.isdir(directory):
-		print('\'{}\' is not a directory. Now aborting...' % (directory))
-		return 1
+	print('Arguments:')
+	for arg in args:
+		print(arg)
 
-	# Check if the build command was issued on its own line within the commit message.
-	print('Remote URL: ' + GitHelper.RemoteURL(directory))
-	tag = GitHelper.GetTag(directory)
-	if tag.startswith('fatal: '):
-		print(tag)
-		print('No tag is associated with this commit. Now aborting...')
-		return 1
-	print('Tag for this repository:', tag)
-	print('Commit for this repository:', GitHelper.CommitHash(directory))
+	# Clone the repository to the specified directory and change to it.
+	repo = GitHelper(repolink, dst=repodir)
+	repo.Checkout(checkout)
+	os.chdir(repodir)
 
-	# Find the first Jupyter Notebook inside the directory.
-	nb_fname = ''
-	for fname in os.listdir(args[1]):
-		if fname == 'process.ipynb':
-			nb_fname = os.path.join(args[1], fname)
-			break
-	if nb_fname == '':
-		print('No process.ipynb was detected in the directory \'{}\'. Now aborting...' % (directory))
-		return 1
+	# Create the destination subdirectory for the artifacts using the link and checkout identifier.
+	print('ARTIFACT_DIR:', ARTIFACT_DIR)
+	print('repo.dirname:', repo.dirname)
+	outdir = os.path.join(ARTIFACT_DIR, repo.dirname)
 
+	# Generate artifacts within the output directory.
 	try:
-		nb = AppNB(nb_fname)
-		files = nb.Generate(outputdir)
+		nb = AppNB(repo)
+		files = nb.Generate(outdir)
+
+		# Move the generated files to the artifact directory and commit them.
+		os.chdir(outdir)
 		for fname in files:
-			print('Created:', fname)
+			print('Adding artifact:', fname)
+
+			proc = Util.System(['git', 'add', fname])
+			print(proc.stdout)
+			print(proc.stderr)
+			proc.check_returncode()
+
+		proc = Util.System(['git', 'commit', '-m', 'Update from Jenkins.'])
+		print(proc.stdout)
+		print(proc.stderr)
+		proc.check_returncode()
 
 	except (jsonschema.exceptions.ValidationError, jsonschema.exceptions.SchemaError) as e:
 		print(e)
 		os.chdir(original_dir)
+		return 1
+	except Exception as e:
+		print(e)
 		return 1
 
 	os.chdir(original_dir)
