@@ -1,4 +1,4 @@
-#!/bin/sh -xe
+#!/bin/bash -xe
 WorkingDir=$(pwd)
 ParserDir="/home/ubuntu/zhan/app-pack-generator"
 Parser="$ParserDir/parser.py"
