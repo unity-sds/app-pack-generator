@@ -8,7 +8,7 @@ ActivateVEnv="source $ParserDir/env/bin/activate"
 TestingDir="/home/zhan/downsample-landsat"
 ARTIFACT_DIR="$WorkingDir/artifact-deposit-repo"
 
-echo "pwd=$pwd"
+echo "$(ls -la $ParserDir)"
 
 $ActivateVEnv
 env ARTIFACT_DIR=$ARTIFACT_DIR $PythonExe "$Parser" "$repository" "$checkout"
