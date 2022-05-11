@@ -3,16 +3,12 @@ build_image:
 
   before_script:
   - docker info
-  # TODO: Uncomment after the initial CI build!
-  # - docker inspect -f '{{.State.Running}}' registry
 
   script:
-    - docker login -u gitlab-ci-token -p "$CI_JOB_TOKEN" "$CI_REGISTRY"
-    - echo "$S3_CODE_BUCKET" "$MOZART_REST_URL" "$GRQ_REST_URL"
     - ./build.sh
 
   tags:
     - shell
 
   only:
-   - master
+   - main
