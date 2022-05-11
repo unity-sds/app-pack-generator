@@ -2,7 +2,7 @@
 WorkingDir=$(pwd)
 ParserDir="/home/ubuntu/zhan/app-pack-generator"
 Parser="$ParserDir/parser.py"
-PythonExe="python3.7"
+PythonExe="python3"
 ActivateVEnv="source $ParserDir/env/bin/activate"
 
 TestingDir="/home/zhan/downsample-landsat"
