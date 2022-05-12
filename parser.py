@@ -220,7 +220,7 @@ class AppNB:
 				nb_fname = os.path.join(self.repo.directory, fname)
 				break
 		if nb_fname == '':
-			raise 'No process.ipynb was detected in the directory \'{}\'. Now aborting...' % (directory)
+			raise 'No process.ipynb was detected in the directory \'{}\'. Now aborting...' % (self.repo.directory)
 		
 		print('Opening', nb_fname + '...')
 		with open(nb_fname, 'r') as f:
