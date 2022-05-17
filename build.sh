@@ -14,7 +14,7 @@ echo "$(ls -la $ParserDir)"
 GIT_SSH="ssh -i \"$ARTIFACT_SSH\"" git clone "$ARTIFACT_URL" "$ARTIFACT_DIR"
 
 $ActivateVEnv
-env ARTIFACT_DIR=$ARTIFACT_DIR $PythonExe "$Parser" "$repository" "$checkout"
+#env ARTIFACT_DIR=$ARTIFACT_DIR $PythonExe "$Parser" "$repository" "$checkout"
 deactivate
 
 ls -la
