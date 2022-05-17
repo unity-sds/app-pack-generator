@@ -8,7 +8,7 @@ ActivateVEnv="source $ParserDir/env/bin/activate"
 TestingDir="/home/zhan/downsample-landsat"
 ARTIFACT_DIR="$WorkingDir/artifact-deposit-repo"
 ARTIFACT_URL="git@github.com:jplzhan/artifact-deposit-repo.git"
-GIT_SSH_COMMAND="ssh -i $ARTIFACT_SSH"
+export GIT_SSH_COMMAND="ssh -i $ARTIFACT_SSH"
 
 echo "$(ls -la $ParserDir)"
 
