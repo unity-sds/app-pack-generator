@@ -11,6 +11,8 @@ ARTIFACT_URL="git@github.com:jplzhan/artifact-deposit-repo.git"
 
 echo "$(ls -la $ParserDir)"
 
+ls -la $ARTIFACT_SSH
+
 GIT_SSH="ssh -i $ARTIFACT_SSH" git clone "$ARTIFACT_URL" "$ARTIFACT_DIR"
 
 $ActivateVEnv
