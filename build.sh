@@ -13,7 +13,7 @@ echo "$(ls -la $ParserDir)"
 
 ls -la $ARTIFACT_SSH
 
-GIT_SSH="ssh -i $ARTIFACT_SSH" git clone "$ARTIFACT_URL" "$ARTIFACT_DIR"
+GIT_SSH_COMMAND="ssh -i $ARTIFACT_SSH" git clone "$ARTIFACT_URL" "$ARTIFACT_DIR"
 
 $ActivateVEnv
 #env ARTIFACT_DIR=$ARTIFACT_DIR $PythonExe "$Parser" "$repository" "$checkout"
