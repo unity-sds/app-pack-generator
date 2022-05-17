@@ -18,4 +18,4 @@ env ARTIFACT_DIR=$ARTIFACT_DIR $PythonExe "$Parser" "$repository" "$checkout"
 deactivate
 
 cd $ARTIFACT_DIR
-GIT_SSH_COMMAND="ssh -i $ARTIFACT_SSH" git push
+GIT_SSH_COMMAND="ssh -i $ARTIFACT_SSH" git push || true
