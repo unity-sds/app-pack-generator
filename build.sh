@@ -7,10 +7,11 @@ ActivateVEnv="source $ParserDir/env/bin/activate"
 
 TestingDir="/home/zhan/downsample-landsat"
 ARTIFACT_DIR="$WorkingDir/artifact-deposit-repo"
+ARTIFACT_URL="git@github.com:jplzhan/artifact-deposit-repo.git"
 
 echo "$(ls -la $ParserDir)"
 
-GIT_SSH=$ARTIFACT_SSH git clone git@github.com:jplzhan/artifact-deposit-repo.git
+GIT_SSH="ssh -i \"$ARTIFACT_SSH\"" git clone "$ARTIFACT_URL" "$ARTIFACT_DIR"
 
 $ActivateVEnv
 env ARTIFACT_DIR=$ARTIFACT_DIR $PythonExe "$Parser" "$repository" "$checkout"
