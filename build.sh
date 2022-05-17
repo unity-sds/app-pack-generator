@@ -10,6 +10,8 @@ ARTIFACT_DIR="$WorkingDir/artifact-deposit-repo"
 
 echo "$(ls -la $ParserDir)"
 
+GIT_SSH=$ARTIFACT_SSH git clone git@github.com:jplzhan/artifact-deposit-repo.git
+
 $ActivateVEnv
 env ARTIFACT_DIR=$ARTIFACT_DIR $PythonExe "$Parser" "$repository" "$checkout"
 deactivate
