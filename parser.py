@@ -390,10 +390,9 @@ def main(args):
 			print(proc.stderr)
 			proc.check_returncode()
 
-		proc = Util.System(['git', 'commit', '-m', 'Update from Jenkins.'])
+		proc = Util.System(['git', 'commit', '-m', 'Update from CI/CD server.'])
 		print(proc.stdout)
 		print(proc.stderr)
-		proc.check_returncode()
 
 	except (jsonschema.exceptions.ValidationError, jsonschema.exceptions.SchemaError) as e:
 		print(e)
