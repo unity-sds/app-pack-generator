@@ -15,10 +15,13 @@ import tempfile
 import urllib3
 import yaml
 
+
 # Disable this warning because the Jenkins server has no certificate.
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 JENKINS_URL = 'https://soamc-pcm-ci.jpl.nasa.gov/'
+GITLAB_URL = 'https://repo.dit.maap-project.org/api/v4/projects/19/trigger/pipeline'
+GITLAB_LOG_URL = 'https://repo.dit.maap-project.org/api/v4/projects/19/jobs'
 JOB_ENDPOINT = 'MAAP_Build_Trigger_param'
 JOB_TOKEN = 'abcdefg123456'
 
@@ -26,6 +29,15 @@ JOB_TOKEN = 'abcdefg123456'
 USER_TOKEN = ''
 with open('.token/secret.txt', 'r') as f:
 	USER_TOKEN = f.read().strip()
+
+# Load in pipeline token for Gitlab Runner authentication
+GITLAB_TOKEN = ''
+with open('.token/pipeline.txt', 'r') as f:
+	GITLAB_TOKEN = f.read().strip()
+
+LOG_TOKEN = ''
+with open('.token/gitlab-token.txt', 'r') as f:
+	LOG_TOKEN = f.read().strip()
 
 class Util:
 	@staticmethod
@@ -61,8 +73,7 @@ class Util:
 			pass
 		return key_type
 
-
-def main(args):
+def QueryJenkins(args):
 	#repo = 'https://github.jpl.nasa.gov/zhan/algorithm-deposit-repo.git'
 	repo = 'https://github.com/jplzhan/algorithm-deposit-repo.git'
 	payload = {'repository': repo, 'checkout': 'downsample-landsat'}
@@ -71,10 +82,33 @@ def main(args):
 	server._session.verify = False
 	print('Count:', server.jobs_count())
 	print(JOB_ENDPOINT + ':', server.build_job(JOB_ENDPOINT, parameters=payload))
-	return
+	return 0
+
+
+def QueryGitlab(args):
+	repo = 'https://github.com/jplzhan/algorithm-deposit-repo.git'
+	payload = {'variables[repository]': repo, 'variables[checkout]': 'downsample-landsat', 'token': GITLAB_TOKEN, 'ref': 'main'}
+
+	response = requests.post(GITLAB_URL, data=payload)
+	print(response.content.decode('utf-8'))
+
+	return 0
+
+
+def GetGitlabLogs(args):
+	headers = {'PRIVATE-TOKEN': LOG_TOKEN}
+	payload = {'scope': ['success']}#['running', 'success', 'failed']}
+	response = requests.get(GITLAB_LOG_URL, headers=headers, data=payload)
+	response_json = json.loads(response.content.decode('utf-8'))
+	print(response.json()[0])
+
+def main(args):
+	return QueryGitlab(args)
+	#return GetGitlabLogs(args)
 
 
 if __name__ == '__main__':
 	time_ms, ret = Util.TimeFunction(main, sys.argv)
 	print('Execution Time:', time_ms, 'ms (returned', str(ret) + ')')
 	exit(ret)
+
