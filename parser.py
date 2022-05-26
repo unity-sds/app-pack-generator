@@ -302,12 +302,12 @@ class AppNB:
 		"""
 		if not os.path.isdir(outdir):
 			os.makedirs(outdir)
-		deposit_url = 'https://github.com/jplzhan/artifact-deposit-repo'
+		deposit_url = 'https://raw.githubusercontent.com/jplzhan/artifact-deposit-repo'
 		tag = self.repo.dirname
 		proc_dict = self.descriptor['processDescription']['process']
 		proc_dict['id'] = self.repo.owner + '.' + self.repo.name + '.' + self.repo.checkout 
 		proc_dict['title'] = GitHelper.Message(self.repo.directory).strip()
-		proc_dict['owsContext']['offering']['content']['href'] = deposit_url + '/blob/main/' + tag + '/process.cwl'
+		proc_dict['owsContext']['offering']['content']['href'] = deposit_url + '/main/' + tag + '/process.cwl'
 		
 		proc_dict['inputs'] = []
 		for key in self.inputs:
