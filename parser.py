@@ -416,6 +416,8 @@ def main(args):
 
 		# Move the generated files to the artifact directory and commit them.
 		os.chdir(outdir)
+		Util.System(['git', 'config', 'user.name', 'Automated'])
+		Util.System(['git', 'config', 'user.email', 'N/A'])
 		for fname in files:
 			print('Adding artifact:', fname)
 
