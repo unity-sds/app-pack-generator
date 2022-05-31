@@ -206,7 +206,9 @@ class AppNB:
 		self.repo = repo
 		self.descriptor = {}
 		self.appcwl = {}
+		print('Checkpoint 0.1')
 		self.ParseAppCWL(os.path.join(templatedir, 'process.cwl'))
+		print('Checkpoint 0.2')
 		self.ParseDescriptor(os.path.join(templatedir, 'app_desc.json'))
 
 		print('Checkpoint 1')
@@ -409,6 +411,7 @@ def main(args):
 	# Generate artifacts within the output directory.
 	return_code = 0
 	try:
+		print('Checkpoint 0')
 		nb = AppNB(repo, proc=os.getenv('process'))
 		print('Checkpoint 2')
 		files = nb.Generate(outdir)
