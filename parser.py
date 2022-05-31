@@ -406,7 +406,9 @@ def main(args):
 	# Create the destination subdirectory for the artifacts using the link and checkout identifier.
 	print('ARTIFACT_DIR:', ARTIFACT_DIR)
 	print('repo.dirname:', repo.dirname)
+	print('Path joining ' + ARTIFACT_DIR + ' and ' + repo.dirname)
 	outdir = os.path.join(ARTIFACT_DIR, repo.dirname)
+	print('Did I join the path successfully????')
 
 	# Generate artifacts within the output directory.
 	return_code = 0
