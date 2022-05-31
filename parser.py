@@ -209,6 +209,8 @@ class AppNB:
 		self.ParseAppCWL(os.path.join(templatedir, 'process.cwl'))
 		self.ParseDescriptor(os.path.join(templatedir, 'app_desc.json'))
 
+		print('Checkpoint 1')
+
 		# TODO - Need more rigorous checks here...
 		self.process = proc if proc is not None and os.path.exists(proc) else 'process.ipynb'
 		if proc.endswith('.ipynb'):
@@ -405,8 +407,10 @@ def main(args):
 	outdir = os.path.join(ARTIFACT_DIR, repo.dirname)
 
 	# Generate artifacts within the output directory.
+	return_code = 0
 	try:
 		nb = AppNB(repo, proc=os.getenv('process'))
+		print('Checkpoint 2')
 		files = nb.Generate(outdir)
 
 		# Move the generated files to the artifact directory and commit them.
@@ -425,14 +429,13 @@ def main(args):
 
 	except (jsonschema.exceptions.ValidationError, jsonschema.exceptions.SchemaError) as e:
 		print(e)
-		os.chdir(original_dir)
-		return 1
+		return_code = 1
 	except Exception as e:
 		print(e)
-		return 1
+		return_code = 1
 
 	os.chdir(original_dir)
-	return 0
+	return return_code
 
 
 if __name__ == '__main__':
