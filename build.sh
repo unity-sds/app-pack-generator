@@ -1,7 +1,7 @@
 #!/bin/bash -xe
 WorkingDir=$(pwd)
 ParserDir="/home/ubuntu/zhan/app-pack-generator"
-Parser="$ParserDir/parser.py"
+Parser="parser.py"
 PythonExe="python3"
 ActivateVEnv="source $ParserDir/env/bin/activate"
 
