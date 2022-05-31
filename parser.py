@@ -171,7 +171,7 @@ class Docker:
 			try:
 				requests.get(REPO2DOCKER_ENV)
 			except Exception as e:
-				print('Could not download assumed URL: \'{}\''.format(REPO2DOCKER_ENV))
+				print('Could not download assumed URL: \'{}\'' % (REPO2DOCKER_ENV))
 				print(e)
 
 		process = Util.System(cmd)
