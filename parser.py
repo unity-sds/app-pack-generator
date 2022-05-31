@@ -206,12 +206,8 @@ class AppNB:
 		self.repo = repo
 		self.descriptor = {}
 		self.appcwl = {}
-		print('Checkpoint 0.1')
 		self.ParseAppCWL(os.path.join(templatedir, 'process.cwl'))
-		print('Checkpoint 0.2')
 		self.ParseDescriptor(os.path.join(templatedir, 'app_desc.json'))
-
-		print('Checkpoint 1')
 
 		# TODO - Need more rigorous checks here...
 		self.process = proc if proc is not None and os.path.exists(proc) else 'process.ipynb'
@@ -292,6 +288,10 @@ class AppNB:
 		
 		if self.process.endswith('.sh'):
 			self.appcwl['baseCommand'] = ['sh', self.process]
+			fname = os.path.join(outdir, 'process.cwl')
+			with open(fname, 'w', encoding='utf-8') as f:
+				f.write("#!/bin/bash\n")
+				yaml.dump(self.appcwl, f, default_flow_style=False)
 			return os.path.join(outdir, 'process.cwl')
 
 		self.appcwl['hints']['DockerRequirement']['dockerPull'] = dockerurl
@@ -406,16 +406,12 @@ def main(args):
 	# Create the destination subdirectory for the artifacts using the link and checkout identifier.
 	print('ARTIFACT_DIR:', ARTIFACT_DIR)
 	print('repo.dirname:', repo.dirname)
-	print('Path joining ' + ARTIFACT_DIR + ' and ' + repo.dirname)
 	outdir = os.path.join(ARTIFACT_DIR, repo.dirname)
-	print('Did I join the path successfully????')
 
 	# Generate artifacts within the output directory.
 	return_code = 0
 	try:
-		print('Checkpoint 0')
 		nb = AppNB(repo, proc=os.getenv('process'))
-		print('Checkpoint 2')
 		files = nb.Generate(outdir)
 
 		# Move the generated files to the artifact directory and commit them.
