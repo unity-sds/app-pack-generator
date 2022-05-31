@@ -24,6 +24,7 @@ IPYNB_SCHEMA = {}
 SCHEMA_FNAME = os.path.join(LOCAL_PATH, 'schemas/nbformat.v4.schema.json')
 INPUT_TAG = 'parameters'
 OUTPUT_TAG = 'outputFiles'
+REPO2DOCKER_ENV = os.getenv('env')
 
 if os.path.exists(SCHEMA_FNAME):
 	with open(SCHEMA_FNAME, 'r') as f:
@@ -160,8 +161,20 @@ class Docker:
 		if len(image_tag) > 128:
 			image_tag = image_tag[0:128]
 
-		process = Util.System(['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-			'--no-run', '--debug', '--image-name', image_tag, repo.directory])
+		cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
+			'--no-run', '--debug', '--image-name', image_tag, repo.directory]
+		if REPO2DOCKER_ENV is not None and os.path.exists(REPO2DOCKER_ENV):
+			cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
+			'--no-run', '--debug', '--image-name', '--config',
+			REPO2DOCKER_ENV, image_tag, repo.directory]
+		elif REPO2DOCKER_ENV is not None:
+			try:
+				requests.get(REPO2DOCKER_ENV)
+			except Exception as e:
+				print('Could not download assumed URL: \'{}\''.format(REPO2DOCKER_ENV))
+				print(e)
+
+		process = Util.System(cmd)
 		print(process.stdout)
 		print(process.stderr)
 
@@ -185,8 +198,9 @@ class Docker:
 
 class AppNB:
 	"""Defines a parsed Jupyter Notebook read as a JSON file."""
-	def __init__(self, repo, templatedir=os.path.join(LOCAL_PATH, 'templates')):
+	def __init__(self, repo, proc=None, templatedir=os.path.join(LOCAL_PATH, 'templates')):
 		self.notebook = {}
+		self.parameters = {}
 		self.inputs = []
 		self.outputs = []
 		self.repo = repo
@@ -194,7 +208,13 @@ class AppNB:
 		self.appcwl = {}
 		self.ParseAppCWL(os.path.join(templatedir, 'process.cwl'))
 		self.ParseDescriptor(os.path.join(templatedir, 'app_desc.json'))
-		self.ParseNotebook()
+
+		# TODO - Need more rigorous checks here...
+		self.process = proc if proc is not None and os.path.exists(proc) else 'process.ipynb'
+		if proc.endswith('.ipynb'):
+			self.ParseNotebook()
+		elif not proc.endswith('.sh'):
+			raise 'Unsupported file format submitted for entrypoint.'
 
 	def ParseAppCWL(self, app_cwl_fname):
 		"""Loads the template application CWL."""
@@ -265,6 +285,11 @@ class AppNB:
 		"""
 		if not os.path.isdir(outdir):
 			os.makedirs(outdir)
+		
+		if self.process.endswith('.sh'):
+			self.appcwl['baseCommand'] = ['sh', self.process]
+			return os.path.join(outdir, 'process.cwl')
+
 		self.appcwl['hints']['DockerRequirement']['dockerPull'] = dockerurl
 		self.appcwl['inputs'] = {}
 		input_dict = self.appcwl['inputs']
@@ -352,6 +377,10 @@ def main(args):
 
 		1 - The HTTPS link to the repository which will be cloned.
 		2 - The identifier the repository will run 'git checkout' to.
+
+	Optional environment variables which may be defined:
+		1 - "process": Relative path to an existing .ipynb or .sh file.
+		2 - "env": Relative path or URL to an existing file compatible with repo2docker.
 	"""
 	min_args = 3
 	if len(args) < min_args:
@@ -377,7 +406,7 @@ def main(args):
 
 	# Generate artifacts within the output directory.
 	try:
-		nb = AppNB(repo)
+		nb = AppNB(repo, proc=os.getenv('process'))
 		files = nb.Generate(outdir)
 
 		# Move the generated files to the artifact directory and commit them.
