@@ -288,11 +288,6 @@ class AppNB:
 		
 		if self.process.endswith('.sh'):
 			self.appcwl['baseCommand'] = ['sh', self.process]
-			fname = os.path.join(outdir, 'process.cwl')
-			with open(fname, 'w', encoding='utf-8') as f:
-				f.write("#!/bin/bash\n")
-				yaml.dump(self.appcwl, f, default_flow_style=False)
-			return os.path.join(outdir, 'process.cwl')
 
 		self.appcwl['hints']['DockerRequirement']['dockerPull'] = dockerurl
 		self.appcwl['inputs'] = {}

@@ -87,7 +87,24 @@ def QueryJenkins(args):
 
 def QueryGitlab(args):
 	repo = 'https://github.com/jplzhan/algorithm-deposit-repo.git'
-	payload = {'variables[repository]': repo, 'variables[checkout]': 'downsample-landsat', 'token': GITLAB_TOKEN, 'ref': 'main'}
+	
+	# This payload is the bare minimum expected by the endpoint.
+	payload = {
+		'variables[repository]': repo,
+		'variables[checkout]': 'downsample-landsat',
+		'token': GITLAB_TOKEN,
+		'ref': 'main'
+	}
+
+	# This payload also specifies the entrypoint and an external configuration file.
+	payload = {
+		'variables[repository]': 'https://github.com/lauraduncanson/icesat2_boreal.git',
+		'variables[checkout]': 'master',
+		'variables[process]': 'dps/alg_3-1-5/run.sh',
+		'variables[env]': 'https://mas.maap-project.org/root/ade-base-images/-/raw/vanilla/docker/Dockerfile',
+		'token': GITLAB_TOKEN,
+		'ref': 'main',
+		}
 
 	response = requests.post(GITLAB_URL, data=payload)
 	print(response.content.decode('utf-8'))
