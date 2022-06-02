@@ -257,6 +257,7 @@ class AppNB:
 						validation_success = True
 						break
 				except (jsonschema.exceptions.ValidationError, jsonschema.exceptions.SchemaError) as e:
+					print(fname + ' failed...')
 					continue
 			else:
 				print(fname + ' does not exist.')
