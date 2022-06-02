@@ -248,7 +248,7 @@ class AppNB:
 		with open(nb_fname, 'r') as f:
 			self.notebook = json.load(f)
 		
-		jsonschema.validate(instance=self.notebook, schema=IPYNB_SCHEMA)
+		#jsonschema.validate(instance=self.notebook, schema=IPYNB_SCHEMA)
 		self.parameters = papermill.inspect_notebook(nb_fname)
 		self.inputs = list(self.parameters.keys())
 		print(self.parameters)
