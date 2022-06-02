@@ -211,10 +211,12 @@ class AppNB:
 
 		# TODO - Need more rigorous checks here...
 		self.process = proc if proc is not None and os.path.exists(proc) else 'process.ipynb'
-		if proc is not None and proc.endswith('.ipynb'):
-			self.ParseNotebook()
-		elif proc is not None and not proc.endswith('.sh'):
+		if self.process.endswith('.ipynb'):
+			self.ParseNotebook(self.process)
+		elif self.process.endswith('.sh'):
 			raise 'Unsupported file format submitted for entrypoint.'
+		else:
+			print('Using .sh file with name \'' + self.process + '\' as executable process...')
 
 	def ParseAppCWL(self, app_cwl_fname):
 		"""Loads the template application CWL."""
@@ -228,7 +230,7 @@ class AppNB:
 		with open(desc_fname, 'r') as f:
 			self.descriptor = json.load(f)
 
-	def ParseNotebook(self):
+	def ParseNotebook(self, nb_name='process.ipynb'):
 		"""Deduces the application notebook within the managed .
 		Should validate nb_fname as a valid, existing Jupyter Notebook to
 		ensure no exception is thrown.
@@ -236,7 +238,7 @@ class AppNB:
 		# Find the first Jupyter Notebook inside the directory.
 		nb_fname = ''
 		for fname in os.listdir(self.repo.directory):
-			if fname == 'process.ipynb':
+			if fname == nb_name:
 				nb_fname = os.path.join(self.repo.directory, fname)
 				break
 		if nb_fname == '':
