@@ -208,7 +208,8 @@ class AppNB:
 		if self.process.endswith('.ipynb'):
 			self.ParseNotebook(self.process)
 		elif self.process.endswith('.sh'):
-			raise 'Unsupported file format submitted for entrypoint.'
+			msg = 'Unsupported file format submitted for entrypoint.'
+			raise RuntimeError(msg)
 		else:
 			print('Using .sh file with name \'' + self.process + '\' as executable process...')
 
@@ -237,7 +238,8 @@ class AppNB:
 				nb_fname = os.path.join(self.repo.directory, fname)
 				break
 		if nb_fname == '':
-			raise 'No process.ipynb was detected in the directory \'{}\'. Now aborting...' % (self.repo.directory)
+			msg = 'No process.ipynb was detected in the directory \'{}\'. Now aborting...' % (self.repo.directory)
+			raise RuntimeError(msg)
 		
 		print('Opening', nb_fname + '...')
 		with open(nb_fname, 'r') as f:
@@ -259,7 +261,8 @@ class AppNB:
 			else:
 				print(fname + ' does not exist.')
 		if not validation_success:
-			raise 'Failed to validate \'' + nb_fname + '\' as a v4.0 - v4.5 Jupyter Notebook...'
+			msg = 'Failed to validate \'' + nb_fname + '\' as a v4.0 - v4.5 Jupyter Notebook...'
+			raise RuntimeError(msg)
 			
 		self.parameters = papermill.inspect_notebook(nb_fname)
 		self.inputs = list(self.parameters.keys())
@@ -409,7 +412,8 @@ def main(args):
 
 	# Clone the repository to the specified directory and change to it.
 	if repolink == '':
-		raise 'No repository URL was provided, cannot clone. Now exiting...'
+		msg = 'No repository URL was provided, cannot clone. Now exiting...'
+		raise RuntimeError(msg)
 	repo = GitHelper(repolink, dst=repodir)
 	repo.Checkout(checkout)
 	os.chdir(repodir)
@@ -444,7 +448,7 @@ def main(args):
 	except (jsonschema.exceptions.ValidationError, jsonschema.exceptions.SchemaError) as e:
 		print(e)
 		return_code = 1
-	except Exception as e:
+	except RuntimeError as e:
 		print(e)
 		return_code = 1
 
