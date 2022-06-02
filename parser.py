@@ -20,17 +20,11 @@ Loads the .ipynb jsonschema for validation purposes (TBD).
 """
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 ARTIFACT_DIR = os.getenv('ARTIFACT_DIR')
-IPYNB_SCHEMA = {}
-SCHEMA_FNAME = os.path.join(LOCAL_PATH, 'schemas/nbformat.v4.schema.json')
+SCHEMA_LIST = [os.path.join(LOCAL_PATH, \
+	'schemas/nbformat.v4.{v}.schema.json'.format(v=i)) for i in range(0, 5)]
 INPUT_TAG = 'parameters'
 OUTPUT_TAG = 'outputFiles'
 REPO2DOCKER_ENV = os.getenv('env')
-
-if os.path.exists(SCHEMA_FNAME):
-	with open(SCHEMA_FNAME, 'r') as f:
-		IPYNB_SCHEMA = json.load(f)
-else:
-	print(SCHEMA_FNAME, 'does not exist.')
 
 
 class Util:
@@ -231,7 +225,8 @@ class AppNB:
 			self.descriptor = json.load(f)
 
 	def ParseNotebook(self, nb_name='process.ipynb'):
-		"""Deduces the application notebook within the managed .
+		"""Deduces the application notebook within the repository using nb_fname as a hint.
+
 		Should validate nb_fname as a valid, existing Jupyter Notebook to
 		ensure no exception is thrown.
 		"""
@@ -248,7 +243,24 @@ class AppNB:
 		with open(nb_fname, 'r') as f:
 			self.notebook = json.load(f)
 		
-		#jsonschema.validate(instance=self.notebook, schema=IPYNB_SCHEMA)
+		print('Validating \'' + nb_name + '\' as a valid v4.0 - v4.5 Jupyter notebook...')
+		validation_success = False
+		for fname in SCHEMA_LIST:
+			if os.path.exists(fname):
+				try:
+					with open(fname, 'r') as f:
+						schema = json.load(f)
+						jsonschema.validate(instance=self.notebook, schema=schema)
+						print('Successfully validated \'' + nb_fname + '\' using ' + fname + '.')
+						validation_success = True
+						break
+				except (jsonschema.exceptions.ValidationError, jsonschema.exceptions.SchemaError) as e:
+					continue
+			else:
+				print(fname + ' does not exist.')
+		if not validation_success:
+			raise 'Failed to validate \'' + nb_fname + '\' as a v4.0 - v4.5 Jupyter Notebook...'
+			
 		self.parameters = papermill.inspect_notebook(nb_fname)
 		self.inputs = list(self.parameters.keys())
 		print(self.parameters)
@@ -260,11 +272,11 @@ class AppNB:
 				continue
 			tags = metadata['tags']
 
-			if cell['cell_type'] == 'markdown':
+			if cell_type == 'markdown':
 				if OUTPUT_TAG in tags:
 					self.outputs = [val.strip() for val in cell['source'] if val != '\n']
 					self.outputs = list(collections.OrderedDict.fromkeys(self.outputs))
-					print('outputs')
+					print('outputFiles:')
 					print(self.outputs)
 
 	def Generate(self, outdir=os.path.join(os.getcwd(), '.generated/')):
