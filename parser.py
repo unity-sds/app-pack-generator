@@ -211,7 +211,7 @@ class AppNB:
 
 		# TODO - Need more rigorous checks here...
 		self.process = proc if proc is not None and os.path.exists(proc) else 'process.ipynb'
-		if proc.endswith('.ipynb'):
+		if proc is not None and proc.endswith('.ipynb'):
 			self.ParseNotebook()
 		elif proc is not None and not proc.endswith('.sh'):
 			raise 'Unsupported file format submitted for entrypoint.'
