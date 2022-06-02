@@ -213,7 +213,7 @@ class AppNB:
 		self.process = proc if proc is not None and os.path.exists(proc) else 'process.ipynb'
 		if proc.endswith('.ipynb'):
 			self.ParseNotebook()
-		elif not proc.endswith('.sh'):
+		elif proc is not None and not proc.endswith('.sh'):
 			raise 'Unsupported file format submitted for entrypoint.'
 
 	def ParseAppCWL(self, app_cwl_fname):
