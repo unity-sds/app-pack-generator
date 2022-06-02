@@ -1,4 +1,4 @@
-# app-pack-generator
+# MAAP Application Package Generator
 Generates an application package from a Jupyter Notebook by parsing its contents and metadata.
 
 This repository serves as an endpoint for triggering CI/CD jobs for creating Application Packages for the MAAP project. Whenever a new job is created, this repository will be cloned to a clean folder and then the `build.sh` script will be ran. This script will then run `parser.py`, which will clone the algorithm repository and build an application package from it.
@@ -14,7 +14,30 @@ Any submitted algorithm repository must be:
 2. Contain an valid executable file (an .sh file with `chmod +x` permissions or a .ipynb file which can be ran using `papermill`, view [this link](https://papermill.readthedocs.io/en/latest/) for more information on `papermill`).
 3. Contain a valid configuration file for `repo2docker` (generally an `environment.yml` or `Dockerfile`). Alternatively, this file can be stored elsewhere so long as it is downloadable via a public URL (NOTE: You will have provide this URL in the payload of a POST request if you choose to store this file externally).
 
+**NOTE:** If you are attempting to run an `.ipynb` notebook, `papermill` is required to be one of your dependencies in your configuration file.
+
 If the algorithm repository satisfies all of the listed conditions, a POST request can be submitted to [this URL](https://repo.dit.maap-project.org/api/v4/projects/19/trigger/pipeline) to create a CI/CD job which will build the repository as an algorithm package.
+
+## Preparing Your Notebook
+
+If you are using .ipynb files as your executable, the input parameters will be automatically determined using the `papermill --inspect_notebook <NOTEBOOK_NAME>` command, and correspond to a code cell in the notebook annotated with the `parameters` tag. Numeric parameters are always assumed to be `float` unless a type-hint is provided.
+
+```py
+input_1 = 12.5
+string_var = 'abcdefg'
+integer_var = 86 #type: int
+```
+
+By default, the notebook is assumed to be called `process.ipynb` and located at the top of your repository (you can override this by using the `process` property in the payload you submit).
+
+Outputs can be specified in a similar manner by annotating a markdown cell with the `outputFiles` tag. The format is similar to a plain text file (example below):
+
+```txt
+stdout.txt
+temp.txt
+image.png
+wildcard_*.log
+```
 
 ## Creating a CI/CD Job
 Users can trigger a CI/CD build by sending a POST request to [this URL](https://repo.dit.maap-project.org/api/v4/projects/19/trigger/pipeline), with a payload following this example:
