@@ -7,6 +7,15 @@ The algorithm descriptor and CWL files are uploaded to https://github.com/jplzha
 
 The docker images (referenced by the corresponding CWL/JSON files) are uploaded to https://hub.docker.com/repository/docker/jplzhan/ci-generated-images.
 
+## Preparing Your repository
+Any submitted algorithm repository must be:
+
+1. Publically cloneable (via its HTTPS .git URL) using the command `git clone <YOUR_URL>`. **You DO NOT have to own this repository to submit a job for it.**
+2. Contain an valid executable file (an .sh file with `chmod +x` permissions or a .ipynb file which can be ran using `papermill`, view [this link](https://papermill.readthedocs.io/en/latest/) for more information on `papermill`).
+3. Contain a valid configuration file for `repo2docker` (generally an `environment.yml` or `Dockerfile`). Alternatively, this file can be stored elsewhere so long as it is downloadable via a public URL (NOTE: You will have provide this URL in the payload of a POST request if you choose to store this file externally).
+
+If the algorithm repository satisfies all of the listed conditions, a POST request can be submitted to [this URL](https://repo.dit.maap-project.org/api/v4/projects/19/trigger/pipeline) to create a CI/CD job which will build the repository as an algorithm package.
+
 ## Creating a CI/CD Job
 Users can trigger a CI/CD build by sending a POST request to [this URL](https://repo.dit.maap-project.org/api/v4/projects/19/trigger/pipeline), with a payload following this example:
 ```json
@@ -22,7 +31,7 @@ Users can trigger a CI/CD build by sending a POST request to [this URL](https://
 
 Refer to `query.py` (https://repo.dit.maap-project.org/max.zhan/app-pack-generator/-/blob/main/query.py) for an example of how to use Python to send this payload. You can also use cURL to send this POST request.
 
-You can use the following JSON schema to validate your payload:
+You can use the following [JSON schema](https://json-schema.org/) to validate your payload (refer to the property descriptions for the meaning/usage of each parameter):
 ```json
 {
     "type": "object",
@@ -40,7 +49,7 @@ You can use the following JSON schema to validate your payload:
                 This can be either a commit hash, a branch name, or a tag name.
                 This field will be used as part of the naming scheme for the resulting docker image.
                 Because of this, capital letters and some special characters are forbidden in this name.
-                Valid characters include lowercase letters, numbers, and the '-' character
+                Valid characters include lowercase letters, numbers, and the '-' character.
                 This parameter is required.",
         },
         "variables[process]": {
@@ -77,6 +86,8 @@ You can use the following JSON schema to validate your payload:
     ],
 }
 ```
+
+**NOTE:** As this schema has yet to be used, please keep in mind that you may need to fix minor syntax errors with this schema if you were to directly copy and paste it into a Python script.
 
 ## Checking Your CI/CD Job
 
@@ -157,3 +168,5 @@ The payload to this GET request can be vaidated with the following schema:
     },
 }
 ```
+
+**NOTE:** As this schema has yet to be used, please keep in mind that you may need to fix minor syntax errors with this schema if you were to directly copy and paste it into a Python script.
