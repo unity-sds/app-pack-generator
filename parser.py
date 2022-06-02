@@ -21,7 +21,7 @@ Loads the .ipynb jsonschema for validation purposes (TBD).
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 ARTIFACT_DIR = os.getenv('ARTIFACT_DIR')
 SCHEMA_LIST = [os.path.join(LOCAL_PATH, \
-	'schemas/nbformat.v4.{v}.schema.json'.format(v=i)) for i in range(0, 5)]
+	'schemas/nbformat.v4.{v}.schema.json'.format(v=i)) for i in range(0, 6)]
 INPUT_TAG = 'parameters'
 OUTPUT_TAG = 'outputFiles'
 REPO2DOCKER_ENV = os.getenv('env')
