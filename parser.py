@@ -394,6 +394,8 @@ def main(args):
 		print(arg)
 
 	# Clone the repository to the specified directory and change to it.
+	if repolink == '':
+		raise 'No repository URL was provided, cannot clone. Now exiting...'
 	repo = GitHelper(repolink, dst=repodir)
 	repo.Checkout(checkout)
 	os.chdir(repodir)
