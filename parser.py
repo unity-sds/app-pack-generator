@@ -330,9 +330,9 @@ class AppNB:
 		for dict in [self.stage_in, self.inputs]:
 			for key in dict:
 				param = self.parameters[key]
-			input_dict[key] = {
-				'type': Util.GetKeyType(param['inferred_type_name'], param['default']),
-			}
+				input_dict[key] = {
+					'type': Util.GetKeyType(param['inferred_type_name'], param['default']),
+				}
 
 		fname = os.path.join(outdir, 'workflow.cwl')
 		Util.WriteYMLFile(fname, self.workflow_cwl)
