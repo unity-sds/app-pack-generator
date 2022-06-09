@@ -8,7 +8,7 @@ requirements:
       - entryname: stage_in.sh
         entry: |-
             #!/bin/bash -xe
-            mkdir -f /home/jovyan/input
+            mkdir -f /home/jovyan/inputs
 
 inputs:
   message: string

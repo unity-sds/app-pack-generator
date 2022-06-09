@@ -335,7 +335,8 @@ class AppNB:
 			}
 			script += '\ncurl $(inputs.{key}) /home/jovyan/inputs/{key}'.format(key=key)
 			script += '\necho "{key}: /home/jovyan/inputs/{key}" >> /home/jovyan/inputs/inputs.yml'.format(key=key)
-		
+		self.stage_in_cwl['requirements']['InitialWorkDirRequirement']['listing'][0]['entry'] = script
+
 		fname = os.path.join(outdir, 'stage_in.cwl')
 		Util.WriteYMLFile(fname, self.stage_in_cwl)
 		return fname
