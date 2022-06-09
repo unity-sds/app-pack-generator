@@ -81,7 +81,7 @@ class Util:
 	def WriteYMLFile(fname, target):
 		with open(fname, 'w', encoding='utf-8') as f:
 			f.write("#!/usr/bin/env cwl-runner\n")
-			yaml.dump(target, f, default_flow_style=False)
+			yaml.dump(target, f, default_style='|', default_flow_style=False)
 
 
 
