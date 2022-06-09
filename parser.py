@@ -49,8 +49,25 @@ class Util:
 		return time_diff.total_seconds() * 1000, ret
 
 	@staticmethod
-	def GetKeyType(default_val):
-		"""Check if a given key's default value is a string or can be converted to a float."""
+	def GetKeyType(inferred_type, default_val):
+		"""Attempts to convert the inferred type to an equivalent CWL type.
+		
+		Otherwise, checks if a given key's default value is a string or can be converted to a float."""
+		inferred_type = inferred_type.lower()
+		convert_dict = {
+			'string': ['stage_in', 'stage-in', 'string'],
+			'File': ['stage_out', 'stage-out', 'file'],
+			'int': ['int', 'integer'],
+			'boolean': ['bool', 'boolean'],
+			'float': ['float'],
+			'double': ['double'],
+			'Directory': ['directory'],
+			'Any': ['any']
+		}
+		for key in convert_dict:
+			if inferred_type in convert_dict[key]:
+				return key
+
 		if default_val.find('"') != -1 or default_val.find('\'') != -1:
 			return 'string'
 		key_type = 'Any'
@@ -60,6 +77,11 @@ class Util:
 		except ValueError:
 			pass
 		return key_type
+
+	def WriteYMLFile(fname, target):
+		with open(fname, 'w', encoding='utf-8') as f:
+			f.write("#!/usr/bin/env cwl-runner\n")
+			yaml.dump(target, f, default_flow_style=False)
 
 
 
@@ -307,16 +329,15 @@ class AppNB:
 		input_dict = self.stage_in_cwl['inputs']
 		script = self.stage_in_cwl['requirements']['InitialWorkDirRequirement']['listing'][0]['entry']
 		for key, i in zip(self.stage_in, range(1, len(self.stage_in) + 1)):
+			param = self.parameters[key]
 			input_dict[key] = {
-				'type': Util.GetKeyType(self.parameters[key]['default']),
+				'type': Util.GetKeyType(param['inferred_type_name'], param['default']),
 			}
 			script += '\ncurl $(inputs.{key}) /home/jovyan/inputs/{key}'.format(key=key)
 			script += '\necho "{key}: /home/jovyan/inputs/{key}" >> /home/jovyan/inputs/inputs.yml'.format(key=key)
 		
 		fname = os.path.join(outdir, 'stage_in.cwl')
-		with open(fname, 'w', encoding='utf-8') as f:
-			f.write("#!/usr/bin/env cwl-runner\n")
-			yaml.dump(self.appcwl, f, default_flow_style=False)
+		Util.WriteYMLFile(fname, self.stage_in_cwl)
 		return fname
 
 	def GenerateAppCWL(self, dockerurl, outdir=os.path.join(os.getcwd(), '.generated/')):
@@ -335,8 +356,9 @@ class AppNB:
 		self.appcwl['inputs'] = {}
 		input_dict = self.appcwl['inputs']
 		for key, i in zip(self.inputs, range(1, len(self.inputs) + 1)):
+			param = self.parameters[key]
 			input_dict[key] = {
-				'type': Util.GetKeyType(self.parameters[key]['default']),
+				'type': Util.GetKeyType(param['inferred_type_name'], param['default']),
 				'inputBinding': {
 					'position': i,
 					'shellQuote': False,
@@ -355,10 +377,9 @@ class AppNB:
 				'type': 'File',
 				'outputBinding': {'glob': key},
 			}
+			
 		fname = os.path.join(outdir, 'process.cwl')
-		with open(fname, 'w', encoding='utf-8') as f:
-			f.write("#!/usr/bin/env cwl-runner\n")
-			yaml.dump(self.appcwl, f, default_flow_style=False)
+		Util.WriteYMLFile(fname, self.appcwl)
 		return fname
 
 	def GenerateDescriptor(self, dockerurl, outdir=os.path.join(os.getcwd(), '.generated/')):
