@@ -305,7 +305,7 @@ class AppNB:
 
 		self.stage_in_cwl['inputs'] = {}
 		input_dict = self.stage_in_cwl['inputs']
-		script = self.stage_in_cwl['requirements']['InitialWorkDirRequirement']['listing']['entry']
+		script = self.stage_in_cwl['requirements']['InitialWorkDirRequirement']['listing'][0]['entry']
 		for key, i in zip(self.stage_in, range(1, len(self.stage_in) + 1)):
 			input_dict[key] = {
 				'type': Util.GetKeyType(self.parameters[key]['default']),
