@@ -30,14 +30,17 @@ integer_var = 86 #type: int
 
 By default, the notebook is assumed to be called `process.ipynb` and located at the top of your repository (you can override this by using the `process` property in the payload you submit).
 
-Outputs can be specified in a similar manner by annotating a markdown cell with the `outputFiles` tag. The format is similar to a plain text file (example below):
+Outputs can be specified in a similar manner by type-hinting parameters (still in the parameters cell) with the `stage_out` (or `stage-out`) type. These variables should be strings and their values will specify their glob pattern:
 
-```txt
-stdout.txt
-temp.txt
-image.png
-wildcard_*.log
+```py
+# Both stage_out and stage-out are parsable types
+stdout = 'stdout.txt' # type: stage_out
+tempfile = 'temp.txt' # type: stage-out
+image = 'image.png' # type: stage-out
+wildcard = 'wildcard_*.log' # type: stage_out
 ```
+
+Similarly, stage-in inputs can be specified using the `stage_in` (or `stage-in`) type hint. These parameters are expected to refer to a relative file path. When deploying the job, they will be submitted as a URL, which will be downloaded by the stage-in script and then injected as a relative file path into the notebook.
 
 ## Creating a CI/CD Job
 Users can trigger a CI/CD build by sending a POST request to [this URL](https://repo.dit.maap-project.org/api/v4/projects/19/trigger/pipeline), with a payload following this example:
