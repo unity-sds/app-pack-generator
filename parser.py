@@ -397,7 +397,7 @@ class AppNB:
 			compound_key = compound_key.replace('*', '_')
 			output_dict[compound_key] = {
 				'type': 'File',
-				'outputBinding': {'glob': key},
+				'outputBinding': {'glob': self.parameters[key]['default']},
 			}
 
 		fname = os.path.join(outdir, 'process.cwl')
