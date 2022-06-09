@@ -377,7 +377,7 @@ class AppNB:
 				'type': 'File',
 				'outputBinding': {'glob': key},
 			}
-			
+
 		fname = os.path.join(outdir, 'process.cwl')
 		Util.WriteYMLFile(fname, self.appcwl)
 		return fname
@@ -398,7 +398,8 @@ class AppNB:
 		
 		proc_dict['inputs'] = []
 		for key in self.inputs:
-			key_type = Util.GetKeyType(self.parameters[key]['default'])
+			param = self.parameters[key]
+			key_type = Util.GetKeyType(param['inferred_type_name'], param['default']),
 			proc_dict['inputs'].append({
 				'id': key,
 				'title': 'Automatically detected using papermill.',
