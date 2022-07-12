@@ -113,7 +113,6 @@ class AppPackAPI:
 			payload['variables[env]'] = str(env)
 
 		response = requests.post(GITLAB_URL, data=payload)
-		Util.PrintJSON(response.json())
 		return response
 
 	@staticmethod
@@ -141,7 +140,12 @@ def main(args):
 		'process': 'process.ipynb',
 		'env': 'https://raw.githubusercontent.com/MAAP-Project/maap-workspaces/dit/base_images/r/docker/Dockerfile'
 	}
-	AppPackAPI.CreateJob(**gedi_repo)
+
+
+	response = AppPackAPI.CreateJob(**icesat_repo)
+	Util.PrintJSON(response.json())
+	print('Job URL: ' + response.json()['web_url'])
+
 	return 0
 
 
