@@ -73,6 +73,11 @@ class Util:
 			pass
 		return key_type
 
+	@staticmethod
+	def PrintJSON(js):
+		"""Prints a JSON in pretty format."""
+		print(json.dumps(js, indent=4, sort_keys=True))
+
 def QueryJenkins(args):
 	#repo = 'https://github.jpl.nasa.gov/zhan/algorithm-deposit-repo.git'
 	repo = 'https://github.com/jplzhan/algorithm-deposit-repo.git'
@@ -84,44 +89,60 @@ def QueryJenkins(args):
 	print(JOB_ENDPOINT + ':', server.build_job(JOB_ENDPOINT, parameters=payload))
 	return 0
 
+class AppPackAPI:
+	@staticmethod
+	def CreateJob(repolink, checkout, process=None, env=None):
+		"""Creates the a job by sending a POST request to the CI/CD Gitlab repository
+		for generating application packages compatible with the MAAP project.
 
-def QueryGitlab(args):
-	repo = 'https://github.com/jplzhan/algorithm-deposit-repo.git'
-	
-	# This payload is the bare minimum expected by the endpoint.
-	payload = {
-		'variables[repository]': repo,
-		'variables[checkout]': 'downsample-landsat',
-		'token': GITLAB_TOKEN,
-		'ref': 'main'
-	}
-
-	# This payload also specifies the entrypoint and an external configuration file.
-	payload = {
-		'variables[repository]': 'https://github.com/lauraduncanson/icesat2_boreal.git',
-		'variables[checkout]': 'master',
-		'variables[process]': 'dps/alg_3-1-5/run.sh',
-		'variables[env]': 'https://mas.maap-project.org/root/ade-base-images/-/raw/vanilla/docker/Dockerfile',
-		'token': GITLAB_TOKEN,
-		'ref': 'main',
+			- repolink: The HTTPS URL to the algorithm repository to clone.
+			- checkout: The argument to 'git checkout' after cloning the repository.
+		"""	
+		# This payload is the bare minimum expected by the endpoint.
+		payload = {
+			'variables[repository]': repolink,
+			'variables[checkout]': checkout,
+			'token': GITLAB_TOKEN,
+			'ref': 'main'
 		}
 
-	response = requests.post(GITLAB_URL, data=payload)
-	print(response.content.decode('utf-8'))
+		# This payload also specifies the entrypoint and an external configuration file.
+		if process is not None:
+			payload['variables[process]'] = str(process)
+		if env is not None:
+			payload['variables[env]'] = str(env)
 
-	return 0
+		response = requests.post(GITLAB_URL, data=payload)
+		Util.PrintJSON(response.json())
+		return response
 
-
-def GetGitlabLogs(args):
-	headers = {'PRIVATE-TOKEN': LOG_TOKEN}
-	payload = {'scope': ['success']}#['running', 'success', 'failed']}
-	response = requests.get(GITLAB_LOG_URL, headers=headers, data=payload)
-	response_json = json.loads(response.content.decode('utf-8'))
-	print(response.json()[0])
+	@staticmethod
+	def GetLogs(args):
+		"""Returns the logs to a specific job."""
+		headers = {'PRIVATE-TOKEN': LOG_TOKEN}
+		payload = {'scope': ['success']}#['running', 'success', 'failed']}
+		response = requests.get(GITLAB_LOG_URL, headers=headers, data=payload)
+		Util.PrintJSON(response.json())
 
 def main(args):
-	return QueryGitlab(args)
-	#return GetGitlabLogs(args)
+	alg_repo = {
+		'repolink': 'https://github.com/jplzhan/algorithm-deposit-repo.git',
+		'checkout': 'downsample-landsat',
+	}
+	icesat_repo = {
+		'repolink': 'https://github.com/lauraduncanson/icesat2_boreal.git',
+		'checkout': 'master',
+		'process': 'dps/alg_3-1-5/run.sh',
+		'env': 'https://mas.maap-project.org/root/ade-base-images/-/raw/vanilla/docker/Dockerfile'
+	}
+	gedi_repo = {
+		'repolink': 'https://github.com/jplzhan/gedi-subset.git',
+		'checkout': 'main',
+		'process': 'process.ipynb',
+		'env': 'https://github.com/MAAP-Project/maap-workspaces/blob/dit/base_images/r/docker/Dockerfile'
+	}
+	AppPackAPI.CreateJob(**gedi_repo)
+	return 0
 
 
 if __name__ == '__main__':

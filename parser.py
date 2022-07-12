@@ -78,10 +78,30 @@ class Util:
 			pass
 		return key_type
 
+	@staticmethod
 	def WriteYMLFile(fname, target):
+		"""Writes [target] dictionary to a .yml file with filename [fname]."""
 		with open(fname, 'w', encoding='utf-8') as f:
 			f.write("#!/usr/bin/env cwl-runner\n")
 			yaml.dump(target, f, default_flow_style=False)
+
+	@staticmethod
+	def DownloadLink(url, default=None):
+		"""Downloads the specified URL via a GET request.
+		
+		If url is not a valid link, or if the request fails, returns the [default]
+		parameter instead.
+		"""
+		try:
+			response = requests.get(url)
+			if response.status_code == 404:
+				raise RuntimeError('<Response 404>')
+			return ret
+		except Exception as e:
+			if url.startswith('http://') or url.startswith('https://'):
+				print('Could not download assumed URL: \'' + url + '\'')
+				print(e)
+		return default
 
 
 
@@ -184,11 +204,13 @@ class Docker:
 			'--no-run', '--debug', '--image-name', '--config',
 			REPO2DOCKER_ENV, image_tag, repo.directory]
 		elif REPO2DOCKER_ENV is not None:
-			try:
-				requests.get(REPO2DOCKER_ENV)
-			except Exception as e:
-				print('Could not download assumed URL: \'' + REPO2DOCKER_ENV + '\'')
-				print(e)
+			response = Util.DownloadLink(REPO2DOCKER_ENV)
+			if response is not None:
+				with open(os.path.join(repo.directory, 'Dockerfile'), 'w') as f:
+					f.write(response.content)
+			else:
+				raise RuntimeError('Failed to download to build with \
+					the specified configuration file: ' + REPO2DOCKER_ENV)
 
 		process = Util.System(cmd)
 		print(process.stdout)
@@ -257,13 +279,8 @@ class AppNB:
 		Should validate nb_fname as a valid, existing Jupyter Notebook to
 		ensure no exception is thrown.
 		"""
-		# Find the first Jupyter Notebook inside the directory.
-		nb_fname = ''
-		for fname in os.listdir(self.repo.directory):
-			if fname == nb_name:
-				nb_fname = os.path.join(self.repo.directory, fname)
-				break
-		if nb_fname == '':
+		nb_fname = os.path.join(self.repo.directory, nb_name)
+		if not os.path.exists(nb_fname):
 			msg = 'No process.ipynb was detected in the directory \'{}\'. Now aborting...' % (self.repo.directory)
 			raise RuntimeError(msg)
 		
