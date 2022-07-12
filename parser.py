@@ -207,7 +207,7 @@ class Docker:
 			response = Util.DownloadLink(REPO2DOCKER_ENV)
 			if response is not None:
 				with open(os.path.join(repo.directory, 'Dockerfile'), 'w') as f:
-					f.write(response.content)
+					f.write(response.text)
 			else:
 				msg = 'Failed to download the specified configuration file: ' + REPO2DOCKER_ENV
 				raise RuntimeError(msg)
