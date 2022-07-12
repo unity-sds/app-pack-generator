@@ -96,7 +96,7 @@ class Util:
 			response = requests.get(url)
 			if response.status_code == 404:
 				raise RuntimeError('<Response 404>')
-			return ret
+			return response
 		except Exception as e:
 			if url.startswith('http://') or url.startswith('https://'):
 				print('Could not download assumed URL: \'' + url + '\'')
@@ -209,8 +209,8 @@ class Docker:
 				with open(os.path.join(repo.directory, 'Dockerfile'), 'w') as f:
 					f.write(response.content)
 			else:
-				raise RuntimeError('Failed to download to build with \
-					the specified configuration file: ' + REPO2DOCKER_ENV)
+				msg = 'Failed to download the specified configuration file: ' + REPO2DOCKER_ENV
+				raise RuntimeError(msg)
 
 		process = Util.System(cmd)
 		print(process.stdout)
