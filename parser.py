@@ -132,7 +132,7 @@ class GitHelper:
 	def Clone(repolink, dst=os.getcwd()):
 		"""Clones the specified repository using its HTTPS URL."""
 		print('Cloning to ' + dst + '...')
-		return git.Repo.clone_from(repolink, dst)
+		return git.Repo.clone_from(repolink, dst, recursive=True)
 
 	@staticmethod
 	def Message(repodir):

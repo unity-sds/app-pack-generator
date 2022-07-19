@@ -138,11 +138,11 @@ def main(args):
 		'repolink': 'https://github.com/jplzhan/gedi-subset.git',
 		'checkout': 'main',
 		'process': 'process.ipynb',
-		'env': 'https://raw.githubusercontent.com/MAAP-Project/maap-workspaces/dit/base_images/r/docker/Dockerfile'
+		#'env': 'https://raw.githubusercontent.com/MAAP-Project/maap-workspaces/dit/base_images/r/docker/Dockerfile'
 	}
 
 
-	response = AppPackAPI.CreateJob(**icesat_repo)
+	response = AppPackAPI.CreateJob(**gedi_repo)
 	Util.PrintJSON(response.json())
 	print('Job URL: ' + response.json()['web_url'])
 
