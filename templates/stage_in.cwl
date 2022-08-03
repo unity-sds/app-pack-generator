@@ -16,8 +16,6 @@ inputs:
     inputBinding:
       position: 1
       shellQuote: false
-      valueFrom: |
-        "$(self)"
 
 outputs:
   output_file:

@@ -416,18 +416,30 @@ class AppNB:
 			os.makedirs(outdir)
 		
 		if self.process.endswith('.sh'):
-			# TODO - Should modify the 'inputBinding' base template as well.
 			self.appcwl['baseCommand'] = ['sh', self.process]
 
+		# Forward the ordinary parameters to the process step directly
 		self.appcwl['hints']['DockerRequirement']['dockerPull'] = dockerurl
 		self.appcwl['inputs'] = {}
 		input_dict = self.appcwl['inputs']
-		for key, i in zip(self.inputs, range(1, len(self.inputs) + 1)):
+		for key in self.inputs:
 			param = self.parameters[key]
 			input_dict[key] = {
 				'type': Util.GetKeyType(param['inferred_type_name'], param['default']),
 				'inputBinding': {
-					'position': i,
+					'shellQuote': False,
+					'prefix': '--parameters',
+					'valueFrom': key + ' "$(self)"'
+				},
+			}
+
+		# Append the stage-in files to the input list with type File for explicit
+		# forwarding from another container.
+		for key in self.stage_in:
+			param = self.parameters[key]
+			input_dict[key] = {
+				'type': 'File',
+				'inputBinding': {
 					'shellQuote': False,
 					'prefix': '--parameters',
 					'valueFrom': key + ' "$(self)"'

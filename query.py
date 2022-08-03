@@ -141,8 +141,14 @@ def main(args):
 		#'env': 'https://raw.githubusercontent.com/MAAP-Project/maap-workspaces/dit/base_images/r/docker/Dockerfile'
 	}
 
+	stage_in_repo = {
+		'repolink': 'https://github.com/jplzhan/maap-ci-stage-io.git',
+		'checkout': 'main',
+		'process': 'process.sh'
+	}
 
-	response = AppPackAPI.CreateJob(**gedi_repo)
+
+	response = AppPackAPI.CreateJob(**stage_in_repo)
 	Util.PrintJSON(response.json())
 	print('Job URL: ' + response.json()['web_url'])
 
