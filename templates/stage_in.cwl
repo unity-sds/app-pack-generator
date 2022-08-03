@@ -1,23 +1,26 @@
+#!/usr/bin/env cwltool
+cwlVersion: v1.1
 class: CommandLineTool
-cwlVersion: v1.0
-baseCommand: ["sh", "stage_in.sh"]
-
+hints:
+  DockerRequirement:
+    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.main'
+baseCommand: ["python3", "stage_in.py"]
 requirements:
-  InitialWorkDirRequirement:
-    listing:
-      - entryname: stage_in.sh
-        entry: |-
-            #!/bin/bash -xe
-            mkdir -f /home/jovyan/inputs
+  ShellCommandRequirement: {}
+  NetworkAccess:
+    networkAccess: true
 
 inputs:
-  message: string
-  input_1: string
-  numeral: float
+  input_path:
+    type: string
+    inputBinding:
+      position: 1
+      shellQuote: false
+      valueFrom: |
+        "$(self)"
+
 outputs:
-  inputs_yml:
+  output_file:
     type: File
     outputBinding:
-        glob: /home/jovyan/inputs/inputs.yml
-stdout: stage_in_stdout.txt
-stderr: stage_in_stderr.txt
+      glob: "$(outputs.stdout_of_stage_in_script)"

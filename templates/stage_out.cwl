@@ -11,8 +11,7 @@ requirements:
             echo "Hello world!"
 
 inputs:
-  outfile: File
-  stdout_txt: File
+  output_nb: File
 outputs:
 stdout: stage_out_stdout.txt
 stderr: stage_out_stderr.txt

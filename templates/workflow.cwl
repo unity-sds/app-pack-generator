@@ -11,61 +11,38 @@ hints:
       - workflow_aws_secret_access_key
 
 inputs:
-  workflow_input_url: string
-  workflow_min_spin_time: int
-  workflow_max_spin_time: int
-  workflow_aws_access_key_id: string
-  workflow_aws_secret_access_key: string
-  workflow_base_dataset_url: string
+  var_1: string
+  var_2: string
 
 outputs:
-  final_dataset_dir:
-    type: Directory
-    outputSource: process/dataset_dir
-  stdout-process:
-    type: File
-    outputSource: process/stdout_file
-  stderr-process:
-    type: File
-    outputSource: process/stderr_file
-  stdout-stage_out:
-    type: File
-    outputSource: stage_out/stdout_file
-  stderr-stage_out:
-    type: File
-    outputSource: stage_out/stderr_file
 
 steps:
-
-  stage_in:
+  stage_in_var_1:
     run: stage_in.cwl
     in:
-      input_url: workflow_input_url
+      input_path: var_1
     out:
-      - output_nb_file
-      - image_file
-      - stdout_file
-      - stderr_file
+      - output_file
+
+  stage_in_var_2:
+    run: stage_in.cwl
+    in:
+      input_path: var_2
+    out:
+      - output_file
 
   process:
     run: process.cwl
     in:
-      input_file: stage_in/image_file
-      min_spin_time: workflow_min_spin_time
-      max_spin_time: workflow_max_spin_time
+      var_1: stage_in_var_1/output_file
+      var_2: stage_in_var_2/output_file
     out:
-      - output_nb_file
-      - dataset_dir
-      - stdout_file
-      - stderr_file
+      - output_nb
 
   stage_out:
     run: stage_out.cwl
     in:
       aws_access_key_id: workflow_aws_access_key_id
       aws_secret_access_key: workflow_aws_secret_access_key
-      dataset_dir: process/dataset_dir
-      base_dataset_url: workflow_base_dataset_url
-    out:
-      - stdout_file
-      - stderr_file
+      output_nb: process/output_nb
+    out: []
