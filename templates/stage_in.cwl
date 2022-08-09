@@ -9,8 +9,17 @@ requirements:
   ShellCommandRequirement: {}
   NetworkAccess:
     networkAccess: true
+  EnvVarRequirement:
+    envDef:
+      AWS_ACCESS_KEY_ID: $(inputs.aws_access_key_id)
+      AWS_SECRET_ACCESS_KEY: $(inputs.aws_secret_access_key)
 
 inputs:
+  # AWS S3 bucket access parameters
+  aws_access_key_id: string
+  aws_secret_access_key: string
+
+  # Stage in parameter to download
   input_path:
     type: string
     inputBinding:
@@ -18,7 +27,9 @@ inputs:
       shellQuote: false
 
 outputs:
+  stdout:
+    type: stdout
   output_file:
     type: File
     outputBinding:
-      glob: "$(outputs.stdout_of_stage_in_script)"
+      glob: "$(outputs.stdout)"

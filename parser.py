@@ -345,7 +345,10 @@ class AppNB:
 		self.workflow_cwl['outputs'] = {}
 
 		# Fill out the inputs field for running the workflow CWL
-		self.workflow_cwl['inputs'] = {}
+		self.workflow_cwl['inputs'] = {
+			'workflow_aws_access_key_id': 'string',
+			'workflow_aws_secret_access_key': 'string',
+		}
 		input_dict = self.workflow_cwl['inputs']
 		for dict in [self.stage_in, self.inputs]:
 			for key in dict:
@@ -360,8 +363,9 @@ class AppNB:
 			steps_dict['stage_in_' + key] = {
 				'run': 'stage_in.cwl',
 				'in': {
+					'aws_access_key_id': 'workflow_aws_access_key_id',
+					'aws_secret_access_key': 'workflow_aws_secret_access_key',
 					'input_path': key,
-					# TODO - AWS/S3 credentials as an additional input here?
 				},
 				'out': ['output_file'],
 			}

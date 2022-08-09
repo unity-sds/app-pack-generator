@@ -11,6 +11,8 @@ hints:
       - workflow_aws_secret_access_key
 
 inputs:
+  workflow_aws_access_key_id: string
+  workflow_aws_secret_access_key: string
   var_1: string
   var_2: string
 
@@ -20,6 +22,8 @@ steps:
   stage_in_var_1:
     run: stage_in.cwl
     in:
+      aws_access_key_id: workflow_aws_access_key_id
+      aws_secret_access_key: workflow_aws_secret_access_key
       input_path: var_1
     out:
       - output_file
@@ -27,6 +31,8 @@ steps:
   stage_in_var_2:
     run: stage_in.cwl
     in:
+      aws_access_key_id: workflow_aws_access_key_id
+      aws_secret_access_key: workflow_aws_secret_access_key
       input_path: var_2
     out:
       - output_file
