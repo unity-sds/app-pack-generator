@@ -387,7 +387,11 @@ class AppNB:
 		# Create the stage-out step at the workflow level for eveyr stage-out output
 		steps_dict['stage_out'] = {
 			'run': 'stage_out.cwl',
-			'in': {'output_nb': 'process/output_nb'},
+			'in': {
+				'aws_access_key_id': 'workflow_aws_access_key_id',
+				'aws_secret_access_key': 'workflow_aws_secret_access_key',
+				'output_nb': 'process/output_nb',
+			},
 			'out': [],
 		}
 		output_dict = steps_dict['stage_out']
