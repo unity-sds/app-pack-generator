@@ -4,7 +4,7 @@ class: CommandLineTool
 hints:
   DockerRequirement:
     dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.main'
-baseCommand: ["python3", "stage_in.py"]
+baseCommand: ["python3", "/home/jovyan/stage_in.py"]
 requirements:
   ShellCommandRequirement: {}
   NetworkAccess:

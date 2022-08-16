@@ -348,6 +348,7 @@ class AppNB:
 		self.workflow_cwl['inputs'] = {
 			'workflow_aws_access_key_id': 'string',
 			'workflow_aws_secret_access_key': 'string',
+			'staging_type': 'string',
 		}
 		input_dict = self.workflow_cwl['inputs']
 		for dict in [self.stage_in, self.inputs]:
@@ -365,7 +366,7 @@ class AppNB:
 				'in': {
 					'aws_access_key_id': 'workflow_aws_access_key_id',
 					'aws_secret_access_key': 'workflow_aws_secret_access_key',
-					'staging_type': 'HTTP',
+					'staging_type': 'staging_type',
 					'input_path': key,
 				},
 				'out': ['output_file'],
