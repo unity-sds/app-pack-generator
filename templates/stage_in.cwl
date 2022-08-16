@@ -19,17 +19,24 @@ inputs:
   aws_access_key_id: string
   aws_secret_access_key: string
 
-  # Stage in parameter to download
-  input_path:
+  # The type of path to download (e.g. HTTP, S3, etc...)
+  staging_type:
     type: string
     inputBinding:
       position: 1
       shellQuote: false
 
+  # Stage in parameter to download
+  input_path:
+    type: string
+    inputBinding:
+      position: 2
+      shellQuote: false
+
 outputs:
-  stdout:
+  stdout_txt:
     type: stdout
   output_file:
     type: File
     outputBinding:
-      glob: "$(outputs.stdout)"
+      glob: inputs/*

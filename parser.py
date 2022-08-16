@@ -365,6 +365,7 @@ class AppNB:
 				'in': {
 					'aws_access_key_id': 'workflow_aws_access_key_id',
 					'aws_secret_access_key': 'workflow_aws_secret_access_key',
+					'staging_type': 'HTTP',
 					'input_path': key,
 				},
 				'out': ['output_file'],
@@ -450,7 +451,7 @@ class AppNB:
 				'inputBinding': {
 					'shellQuote': False,
 					'prefix': '--parameters',
-					'valueFrom': key + ' "$(self)"'
+					'valueFrom': key + ' "$(self.path)"'
 				},
 			}
 

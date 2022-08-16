@@ -1,15 +1,9 @@
 #!/usr/bin/env cwltool
 class: CommandLineTool
 cwlVersion: v1.1
-baseCommand: ["sh", "stage_out.sh"]
+baseCommand: ["echo", "Hello world!"]
 
 requirements:
-  InitialWorkDirRequirement:
-    listing:
-      - entryname: stage_out.sh
-        entry: |-
-            #!/bin/bash -xe
-            echo "Hello world!"
   NetworkAccess:
     networkAccess: true
   EnvVarRequirement:
@@ -23,6 +17,6 @@ inputs:
   aws_secret_access_key: string
 
   output_nb: File
-outputs:
+outputs: {}
 stdout: stage_out_stdout.txt
 stderr: stage_out_stderr.txt
