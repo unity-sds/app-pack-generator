@@ -499,7 +499,7 @@ class AppNB:
 		proc_dict = self.descriptor['processDescription']['process']
 		proc_dict['id'] = self.repo.owner + '.' + self.repo.name + '.' + self.repo.checkout 
 		proc_dict['title'] = GitHelper.Message(self.repo.directory).strip()
-		proc_dict['owsContext']['offering']['content']['href'] = deposit_url + '/main/' + tag + '/process.cwl'
+		proc_dict['owsContext']['offering']['content']['href'] = deposit_url + '/main/' + tag + '/workflow.cwl'
 		
 		proc_dict['inputs'] = []
 		for key in self.inputs:
