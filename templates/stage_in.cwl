@@ -9,29 +9,100 @@ requirements:
   ShellCommandRequirement: {}
   NetworkAccess:
     networkAccess: true
-  EnvVarRequirement:
-    envDef:
-      AWS_ACCESS_KEY_ID: $(inputs.aws_access_key_id)
-      AWS_SECRET_ACCESS_KEY: $(inputs.aws_secret_access_key)
 
 inputs:
-  # AWS S3 bucket access parameters
-  aws_access_key_id: string
-  aws_secret_access_key: string
-
-  # The type of path to download (e.g. HTTP, S3, etc...)
-  staging_type:
-    type: string
-    inputBinding:
-      position: 1
-      shellQuote: false
-
-  # Stage in parameter to download
   input_path:
-    type: string
-    inputBinding:
-      position: 2
-      shellQuote: false
+    type:
+      - type: record
+        name: HTTP
+        fields:
+          url:
+            type: string
+            inputBinding:
+              position: 1
+              shellQuote: false
+              valueFrom: HTTP "$(self)"
+      - type: record
+        name: S3_unsigned
+        fields:
+          s3_url:
+            type: string
+            inputBinding:
+              position: 1
+              shellQuote: false
+              valueFrom: S3_unsigned "$(self)"
+      - type: record
+        name: S3
+        fields:
+          s3_url:
+            type: string
+            inputBinding:
+              position: 1
+              shellQuote: false
+              valueFrom: S3 "$(self)"
+          aws_access_key_id:
+            type: string
+            inputBinding:
+              position: 2
+              shellQuote: false
+              valueFrom: "$(self)"
+          aws_secret_access_key:
+            type: string
+            inputBinding:
+              position: 3
+              shellQuote: false
+              valueFrom: "$(self)"
+      - type: record
+        name: DAAC
+        fields:
+          url:
+            type: string
+            inputBinding:
+              position: 1
+              shellQuote: false
+              valueFrom: DAAC "$(self)"
+          username:
+            type: string
+            inputBinding:
+              position: 2
+              shellQuote: false
+              valueFrom: "$(self)"
+          password:
+            type: string
+            inputBinding:
+              position: 3
+              shellQuote: false
+              valueFrom: "$(self)"
+      - type: record
+        name: MAAP
+        fields:
+          collection_id:
+            type: string
+            inputBinding:
+              position: 1
+              shellQuote: false
+              valueFrom: MAAP "$(self)"
+          granule_name:
+            type: string
+            inputBinding:
+              position: 2
+              shellQuote: false
+              valueFrom: "$(self)"
+      - type: record
+        name: Role
+        fields:
+          role_arn:
+            type: string
+            inputBinding:
+              position: 1
+              shellQuote: false
+              valueFrom: Role "$(self)"
+          source_profile:
+            type: string
+            inputBinding:
+              position: 2
+              shellQuote: false
+              valueFrom: "$(self)"
 
 outputs:
   stdout_txt:

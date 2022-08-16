@@ -348,13 +348,57 @@ class AppNB:
 		self.workflow_cwl['inputs'] = {
 			'workflow_aws_access_key_id': 'string',
 			'workflow_aws_secret_access_key': 'string',
-			'staging_type': 'string',
 		}
 		input_dict = self.workflow_cwl['inputs']
-		for dict in [self.stage_in, self.inputs]:
+		for dict in self.inputs:
 			for key in dict:
 				param = self.parameters[key]
 				input_dict[key] = Util.GetKeyType(param['inferred_type_name'], param['default'])
+		
+		# Fill out a very long dictionary field for stage-in inputs
+		for dict in self.stage_in:
+			for key in dict:
+				param = self.parameters[key]
+				input_dict[key] = {
+					'type': [
+						{'type': 'record', 'name': 'HTTP', 'fields': {'url': 'string'}},
+						{'type': 'record', 'name': 'S3_unsigned', 'fields': {'s3_url': 'string'}},
+						{
+							'type': 'record',
+							'name': 'S3',
+							'fields': {
+								's3_url': 'string',
+								'aws_access_key_id': 'string',
+								'aws_secret_access_key': 'string',
+							},
+						},
+						{
+							'type': 'record',
+							'name': 'DAAC',
+							'fields': {
+								'url': 'string',
+								'username': 'string',
+								'password': 'string',
+							}
+						},
+						{
+							'type': 'record',
+							'name': 'MAAP',
+							'fields': {
+								'collection_id': 'string',
+								'granule_name': 'string',
+							}
+						},
+						{
+							'type': 'record',
+							'name': 'Role',
+							'fields': {
+								'role_arn': 'string',
+								'source_profile': 'string',
+							}
+						},
+					],
+				}
 
 		# Create a new stage-in step at the workflow level for every stage-in input
 		self.workflow_cwl['steps'] = {}
@@ -364,9 +408,6 @@ class AppNB:
 			steps_dict['stage_in_' + key] = {
 				'run': 'stage_in.cwl',
 				'in': {
-					'aws_access_key_id': 'workflow_aws_access_key_id',
-					'aws_secret_access_key': 'workflow_aws_secret_access_key',
-					'staging_type': 'staging_type',
 					'input_path': key,
 				},
 				'out': ['output_file'],
