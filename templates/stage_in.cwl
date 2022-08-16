@@ -3,7 +3,7 @@ cwlVersion: v1.1
 class: CommandLineTool
 hints:
   DockerRequirement:
-    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.main'
+    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v1'
 baseCommand: ["python3", "/home/jovyan/stage_in.py"]
 requirements:
   ShellCommandRequirement: {}
