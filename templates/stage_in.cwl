@@ -52,6 +52,18 @@ inputs:
               position: 3
               shellQuote: false
               valueFrom: "$(self)"
+          aws_session_token:
+            type: string
+            inputBinding:
+              position: 4
+              shellQuote: false
+              valueFrom: "$(self)"
+          region:
+            type: string
+            inputBinding:
+              position: 5
+              shellQuote: false
+              valueFrom: "$(self)"
       - type: record
         name: DAAC
         fields:

@@ -378,6 +378,8 @@ class AppNB:
 							's3_url': 'string',
 							'aws_access_key_id': 'string',
 							'aws_secret_access_key': 'string',
+							'aws_session_token': 'string',
+							'region': 'string',
 						},
 					},
 					{
