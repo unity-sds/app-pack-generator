@@ -350,56 +350,10 @@ class AppNB:
 			'workflow_aws_secret_access_key': 'string',
 		}
 		input_dict = self.workflow_cwl['inputs']
-		for dict in self.inputs:
-			for key in dict:
-				param = self.parameters[key]
-				input_dict[key] = Util.GetKeyType(param['inferred_type_name'], param['default'])
+		for key in self.inputs:
+			param = self.parameters[key]
+			input_dict[key] = Util.GetKeyType(param['inferred_type_name'], param['default'])
 		
-		# Fill out a very long dictionary field for stage-in inputs
-		for dict in self.stage_in:
-			for key in dict:
-				param = self.parameters[key]
-				input_dict[key] = {
-					'type': [
-						{'type': 'record', 'name': 'HTTP', 'fields': {'url': 'string'}},
-						{'type': 'record', 'name': 'S3_unsigned', 'fields': {'s3_url': 'string'}},
-						{
-							'type': 'record',
-							'name': 'S3',
-							'fields': {
-								's3_url': 'string',
-								'aws_access_key_id': 'string',
-								'aws_secret_access_key': 'string',
-							},
-						},
-						{
-							'type': 'record',
-							'name': 'DAAC',
-							'fields': {
-								'url': 'string',
-								'username': 'string',
-								'password': 'string',
-							}
-						},
-						{
-							'type': 'record',
-							'name': 'MAAP',
-							'fields': {
-								'collection_id': 'string',
-								'granule_name': 'string',
-							}
-						},
-						{
-							'type': 'record',
-							'name': 'Role',
-							'fields': {
-								'role_arn': 'string',
-								'source_profile': 'string',
-							}
-						},
-					],
-				}
-
 		# Create a new stage-in step at the workflow level for every stage-in input
 		self.workflow_cwl['steps'] = {}
 		steps_dict = self.workflow_cwl['steps']
@@ -411,6 +365,47 @@ class AppNB:
 					'input_path': key,
 				},
 				'out': ['output_file'],
+			}
+			# Fill out a very long dictionary field for stage-in inputs
+			input_dict[key] = {
+				'type': [
+					{'type': 'record', 'name': 'HTTP', 'fields': {'url': 'string'}},
+					{'type': 'record', 'name': 'S3_unsigned', 'fields': {'s3_url': 'string'}},
+					{
+						'type': 'record',
+						'name': 'S3',
+						'fields': {
+							's3_url': 'string',
+							'aws_access_key_id': 'string',
+							'aws_secret_access_key': 'string',
+						},
+					},
+					{
+						'type': 'record',
+						'name': 'DAAC',
+						'fields': {
+							'url': 'string',
+							'username': 'string',
+							'password': 'string',
+						}
+					},
+					{
+						'type': 'record',
+						'name': 'MAAP',
+						'fields': {
+							'collection_id': 'string',
+							'granule_name': 'string',
+						}
+					},
+					{
+						'type': 'record',
+						'name': 'Role',
+						'fields': {
+							'role_arn': 'string',
+							'source_profile': 'string',
+						}
+					},
+				],
 			}
 
 		# Create the process step at the workflow level
