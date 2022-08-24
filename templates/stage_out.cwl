@@ -1,22 +1,63 @@
-#!/usr/bin/env cwltool
-class: CommandLineTool
+#!/usr/bin/env cwl-runner
 cwlVersion: v1.1
-baseCommand: ["echo", "Hello world!"]
-
+class: CommandLineTool
+hints:
+  DockerRequirement:
+    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v4'
+baseCommand: ["python3", "/home/jovyan/stage_out.py"]
 requirements:
+  ShellCommandRequirement: {}
   NetworkAccess:
     networkAccess: true
-  EnvVarRequirement:
-    envDef:
-      AWS_ACCESS_KEY_ID: $(inputs.aws_access_key_id)
-      AWS_SECRET_ACCESS_KEY: $(inputs.aws_secret_access_key)
 
 inputs:
-  # AWS S3 bucket access parameters
-  aws_access_key_id: string
-  aws_secret_access_key: string
-
-  output_nb: File
+  output_path:
+    type:
+      type: record
+      name: output_path
+      fields:
+        aws_access_key_id:
+          inputBinding:
+            position: 2
+            shellQuote: false
+            valueFrom: "$(self)"
+          type: string
+        aws_secret_access_key:
+          inputBinding:
+            position: 3
+            shellQuote: false
+            valueFrom: "$(self)"
+          type: string
+        aws_session_token:
+          inputBinding:
+            position: 4
+            shellQuote: false
+            valueFrom: "$(self)"
+          type: string
+        region:
+          inputBinding:
+            position: 5
+            shellQuote: false
+            valueFrom: "$(self)"
+          type: string
+        s3_url:
+          inputBinding:
+            position: 1
+            shellQuote: false
+            valueFrom: "$(self)"
+          type: string
+  output_dir:
+    inputBinding:
+      position: 6
+      shellQuote: false
+      valueFrom: "$(self.path)"
+    type: Directory
+  output_nb:
+    inputBinding:
+      position: 7
+      shellQuote: false
+      valueFrom: "$(self.path)"
+    type: File
 outputs: {}
-stdout: stage_out_stdout.txt
 stderr: stage_out_stderr.txt
+stdout: stage_out_stdout.txt

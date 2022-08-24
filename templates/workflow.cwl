@@ -4,15 +4,16 @@ cwlVersion: v1.1
 class: Workflow
 $namespaces:
   cwltool: 'http://commonwl.org/cwltool#'
-hints:
-  'cwltool:Secrets':
-    secrets:
-      - workflow_aws_access_key_id
-      - workflow_aws_secret_access_key
-
 inputs:
-  workflow_aws_access_key_id: string
-  workflow_aws_secret_access_key: string
+  stage_out:
+    - fields:
+        aws_access_key_id: string
+        aws_secret_access_key: string
+        aws_session_token: string
+        region: string
+        s3_url: string
+      name: stage_out
+      type: record
   var_1: 
     type:
       - type: record
@@ -50,8 +51,7 @@ inputs:
           aws_session_token: string
           region: string
 
-outputs:
-
+outputs: {}
 steps:
   stage_in_var_1:
     run: stage_in.cwl
@@ -73,12 +73,13 @@ steps:
       var_1: stage_in_var_1/output_file
       var_2: stage_in_var_2/output_file
     out:
+      - output_dir
       - output_nb
 
   stage_out:
     run: stage_out.cwl
     in:
-      aws_access_key_id: workflow_aws_access_key_id
-      aws_secret_access_key: workflow_aws_secret_access_key
+      output_path: stage_out
+      output_dir: process/output_dir
       output_nb: process/output_nb
     out: []

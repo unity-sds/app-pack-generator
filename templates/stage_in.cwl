@@ -1,9 +1,9 @@
-#!/usr/bin/env cwltool
+#!/usr/bin/env cwl-runner
 cwlVersion: v1.1
 class: CommandLineTool
 hints:
   DockerRequirement:
-    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v3'
+    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v4'
 baseCommand: ["python3", "/home/jovyan/stage_in.py"]
 requirements:
   ShellCommandRequirement: {}

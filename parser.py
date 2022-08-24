@@ -346,8 +346,17 @@ class AppNB:
 
 		# Fill out the inputs field for running the workflow CWL
 		self.workflow_cwl['inputs'] = {
-			'workflow_aws_access_key_id': 'string',
-			'workflow_aws_secret_access_key': 'string',
+			'stage_out': [{
+				'type': 'record',
+				'name': 'stage_out',
+				'fields': {
+					's3_url': 'string',
+					'aws_access_key_id': 'string',
+					'aws_secret_access_key': 'string',
+					'aws_session_token': 'string',
+					'region': 'string',
+				},
+			}]
 		}
 		input_dict = self.workflow_cwl['inputs']
 		for key in self.inputs:
@@ -414,7 +423,7 @@ class AppNB:
 		process_dict = {
 			'run': 'process.cwl',
 			'in': {},
-			'out': ['output_nb'],
+			'out': ['output_nb', 'output_dir'],
 		}
 		for key in self.stage_in:
 			process_dict['in'][key] = 'stage_in_' + key + '/output_file'
@@ -428,9 +437,9 @@ class AppNB:
 		steps_dict['stage_out'] = {
 			'run': 'stage_out.cwl',
 			'in': {
-				'aws_access_key_id': 'workflow_aws_access_key_id',
-				'aws_secret_access_key': 'workflow_aws_secret_access_key',
+				'output_path': 'stage_out',
 				'output_nb': 'process/output_nb',
+				'output_dir': 'process/output_dir',
 			},
 			'out': [],
 		}
@@ -500,7 +509,12 @@ class AppNB:
 				'type': 'File',
 				'outputBinding': {'glob': 'output_nb.ipynb'},
 			},
+			'output_dir': {
+				'type': 'Directory',
+				'outputBinding': {'glob': 'output'},
+			},
 		}
+		# TODO - Is this necessary?
 		output_dict = self.appcwl['outputs']
 		for key in self.outputs:
 			output_dict[key] = {
