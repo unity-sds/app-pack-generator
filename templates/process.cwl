@@ -7,6 +7,8 @@ hints:
     dockerPull: marjoluc/hello-world:stable
 requirements:
   ShellCommandRequirement: {}
+  NetworkAccess:
+    networkAccess: true
 inputs:
   input_1:
     type: string
