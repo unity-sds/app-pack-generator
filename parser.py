@@ -192,6 +192,14 @@ class Docker:
 		if not os.path.isdir(workingdir):
 			os.makedirs(workingdir)
 
+		# Prune all dangling containers and images to reclaim space and prevent cache usage.
+		docker_client = docker.from_env()
+		username = os.getenv('DOCKER_USER')
+		password = os.getenv('DOCKER_PASS')
+		docker_client.login(username=username, password=password)
+		docker_client.containers.prune()
+		docker_client.images.prune()
+
 		# Repo2Docker call using the command line.
 		image_tag = repo.owner + '.' + repo.name + '.' + repo.checkout
 		if len(image_tag) > 128:
@@ -216,18 +224,16 @@ class Docker:
 		print(process.stdout)
 		print(process.stderr)
 
-		# Save the newly created image to a tarball if the build succeeded.
-		docker_client = docker.from_env()
-		username = os.getenv('DOCKER_USER')
-		password = os.getenv('DOCKER_PASS')
-		docker_client.login(username=username, password=password)
-		
+		# Save the newly created image to a tarball if the build succeeded.		
 		image = docker_client.images.get(image_tag)
 		repo = 'jplzhan/ci-generated-images'
 		image.tag(repo, tag=image_tag)
 		for line in docker_client.api.push(repo, tag=image_tag, stream=True, decode=True):
 			print(line)
 		docker_client.images.remove(image.id, force=True)
+		docker_client.containers.prune()
+		docker_client.images.prune()
+		
 		if process.stdout != '' or process.stderr == '':
 			return repo + ':' + image_tag, process.stdout
 		return repo + ':' + image_tag, process.stderr
