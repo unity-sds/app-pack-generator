@@ -3,7 +3,7 @@ cwlVersion: v1.1
 class: CommandLineTool
 hints:
   DockerRequirement:
-    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v5'
+    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v6'
 baseCommand: ["python3", "/home/jovyan/stage_in.py"]
 requirements:
   ShellCommandRequirement: {}
@@ -115,6 +115,15 @@ inputs:
               position: 2
               shellQuote: false
               valueFrom: "$(self)"
+      - type: record
+        name: Local
+        fields:
+          path:
+            type: File
+            inputBinding:
+              position: 1
+              shellQuote: false
+              valueFrom: Local "$(self)"
 
 outputs:
   stdout_txt:

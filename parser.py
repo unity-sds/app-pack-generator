@@ -352,17 +352,29 @@ class AppNB:
 
 		# Fill out the inputs field for running the workflow CWL
 		self.workflow_cwl['inputs'] = {
-			'stage_out': [{
-				'type': 'record',
-				'name': 'stage_out',
-				'fields': {
-					's3_url': 'string',
-					'aws_access_key_id': 'string',
-					'aws_secret_access_key': 'string',
-					'aws_session_token': 'string',
-					'region': 'string',
-				},
-			}]
+			'stage_out': {
+				'type': [
+					{
+						'type': 'record',
+						'name': 'STAK',
+						'fields': {
+							's3_url': 'string',
+							'aws_access_key_id': 'string',
+							'aws_secret_access_key': 'string',
+							'aws_session_token': 'string',
+							'region': 'string',
+						},
+					},
+					{
+						'type': 'record',
+						'name': 'LTAK',
+						'fields': {
+							's3_url': 'string',
+							'aws_config': 'Directory',
+						},
+					},
+				],
+			},
 		}
 		input_dict = self.workflow_cwl['inputs']
 		for key in self.inputs:
@@ -420,6 +432,13 @@ class AppNB:
 						'fields': {
 							'role_arn': 'string',
 							'source_profile': 'string',
+						}
+					},
+					{
+						'type': 'record',
+						'name': 'Local',
+						'fields': {
+							'path': 'File',
 						}
 					},
 				],

@@ -3,7 +3,7 @@ cwlVersion: v1.1
 class: CommandLineTool
 hints:
   DockerRequirement:
-    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v5'
+    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v6'
 baseCommand: ["python3", "/home/jovyan/stage_out.py"]
 requirements:
   ShellCommandRequirement: {}
@@ -13,39 +13,54 @@ requirements:
 inputs:
   output_path:
     type:
-      type: record
-      name: output_path
-      fields:
-        aws_access_key_id:
-          inputBinding:
-            position: 2
-            shellQuote: false
-            valueFrom: "$(self)"
-          type: string
-        aws_secret_access_key:
-          inputBinding:
-            position: 3
-            shellQuote: false
-            valueFrom: "$(self)"
-          type: string
-        aws_session_token:
-          inputBinding:
-            position: 4
-            shellQuote: false
-            valueFrom: "$(self)"
-          type: string
-        region:
-          inputBinding:
-            position: 5
-            shellQuote: false
-            valueFrom: "$(self)"
-          type: string
-        s3_url:
-          inputBinding:
-            position: 1
-            shellQuote: false
-            valueFrom: "$(self)"
-          type: string
+      - type: record
+        name: STAK
+        fields:
+          aws_access_key_id:
+            inputBinding:
+              position: 2
+              shellQuote: false
+              valueFrom: "$(self)"
+            type: string
+          aws_secret_access_key:
+            inputBinding:
+              position: 3
+              shellQuote: false
+              valueFrom: "$(self)"
+            type: string
+          aws_session_token:
+            inputBinding:
+              position: 4
+              shellQuote: false
+              valueFrom: "$(self)"
+            type: string
+          region:
+            inputBinding:
+              position: 5
+              shellQuote: false
+              valueFrom: "$(self)"
+            type: string
+          s3_url:
+            inputBinding:
+              position: 1
+              shellQuote: false
+              valueFrom: "$(self)"
+            type: string
+      - type: record
+        name: LTAK
+        fields:
+          s3_url:
+            inputBinding:
+              position: 1
+              shellQuote: false
+              valueFrom: "$(self)"
+            type: string
+          aws_config:
+            inputBinding:
+              position: 2
+              shellQuote: false
+              valueFrom: "$(self.path)"
+            type: Directory
   output_dir:
     inputBinding:
       position: 6
@@ -58,14 +73,6 @@ inputs:
       shellQuote: false
       valueFrom: "$(self.path)"
     type: File
-  aws_config:
-    inputBinding:
-      position: 8
-      shellQuote: false
-      valueFrom: "$(self.path)"
-    type:
-      - "null"
-      - Directory
 outputs: {}
 stderr: stage_out_stderr.txt
 stdout: stage_out_stdout.txt

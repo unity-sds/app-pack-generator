@@ -6,14 +6,20 @@ $namespaces:
   cwltool: 'http://commonwl.org/cwltool#'
 inputs:
   stage_out:
-    - fields:
-        aws_access_key_id: string
-        aws_secret_access_key: string
-        aws_session_token: string
-        region: string
-        s3_url: string
-      name: stage_out
-      type: record
+    type:
+      - type: record
+        name: STAK
+        fields:
+          aws_access_key_id: string
+          aws_secret_access_key: string
+          aws_session_token: string
+          region: string
+          s3_url: string
+      - type: record
+        name: LTAK
+        fields:
+          s3_url: string
+          aws_config: Directory
   var_1: 
     type:
       - type: record
