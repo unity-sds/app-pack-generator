@@ -18,31 +18,31 @@ inputs:
         fields:
           aws_access_key_id:
             inputBinding:
-              position: 2
+              position: 4
               shellQuote: false
               valueFrom: "$(self)"
             type: string
           aws_secret_access_key:
             inputBinding:
-              position: 3
+              position: 5
               shellQuote: false
               valueFrom: "$(self)"
             type: string
           aws_session_token:
             inputBinding:
-              position: 4
+              position: 6
               shellQuote: false
               valueFrom: "$(self)"
             type: string
           region:
             inputBinding:
-              position: 5
+              position: 7
               shellQuote: false
               valueFrom: "$(self)"
             type: string
           s3_url:
             inputBinding:
-              position: 1
+              position: 3
               shellQuote: false
               valueFrom: "$(self)"
             type: string
@@ -51,25 +51,25 @@ inputs:
         fields:
           s3_url:
             inputBinding:
-              position: 1
+              position: 3
               shellQuote: false
               valueFrom: "$(self)"
             type: string
           aws_config:
             inputBinding:
-              position: 2
+              position: 4
               shellQuote: false
               valueFrom: "$(self.path)"
             type: Directory
   output_dir:
     inputBinding:
-      position: 6
+      position: 1
       shellQuote: false
       valueFrom: "$(self.path)"
     type: Directory
   output_nb:
     inputBinding:
-      position: 7
+      position: 2
       shellQuote: false
       valueFrom: "$(self.path)"
     type: File

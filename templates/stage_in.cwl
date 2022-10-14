@@ -123,7 +123,7 @@ inputs:
             inputBinding:
               position: 1
               shellQuote: false
-              valueFrom: Local "$(self)"
+              valueFrom: Local "$(self.path)"
 
 outputs:
   stdout_txt:
