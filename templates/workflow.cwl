@@ -20,6 +20,10 @@ inputs:
         fields:
           s3_url: string
           aws_config: Directory
+      - type: record
+        name: IAM
+        fields:
+          s3_url: string
   var_1: 
     type:
       - type: record

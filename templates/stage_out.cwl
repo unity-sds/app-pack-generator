@@ -3,7 +3,7 @@ cwlVersion: v1.1
 class: CommandLineTool
 hints:
   DockerRequirement:
-    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v6'
+    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v7'
 baseCommand: ["python3", "/home/jovyan/stage_out.py"]
 requirements:
   ShellCommandRequirement: {}
@@ -61,6 +61,15 @@ inputs:
               shellQuote: false
               valueFrom: "$(self.path)"
             type: Directory
+      - type: record
+        name: IAM
+        fields:
+          s3_url:
+            inputBinding:
+              position: 3
+              shellQuote: false
+              valueFrom: "$(self)"
+            type: string
   output_dir:
     inputBinding:
       position: 1

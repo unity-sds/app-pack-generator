@@ -373,6 +373,13 @@ class AppNB:
 							'aws_config': 'Directory',
 						},
 					},
+					{
+						'type': 'record',
+						'name': 'IAM',
+						'fields': {
+							's3_url': 'string',
+						},
+					},
 				],
 			},
 		}
