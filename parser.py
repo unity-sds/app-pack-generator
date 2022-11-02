@@ -197,8 +197,11 @@ class Docker:
 		username = os.getenv('DOCKER_USER')
 		password = os.getenv('DOCKER_PASS')
 		docker_client.login(username=username, password=password)
-		docker_client.containers.prune()
-		docker_client.images.prune()
+		try:
+			docker_client.containers.prune()
+			docker_client.images.prune()
+		except requests.exceptions.ReadTimeout as e:
+			print('An error occurred while pruning: {}'.format(e.what()))
 
 		# Repo2Docker call using the command line.
 		image_tag = repo.owner + '.' + repo.name + '.' + repo.checkout
@@ -231,8 +234,11 @@ class Docker:
 		for line in docker_client.api.push(repo, tag=image_tag, stream=True, decode=True):
 			print(line)
 		docker_client.images.remove(image.id, force=True)
-		docker_client.containers.prune()
-		docker_client.images.prune()
+		try:
+			docker_client.containers.prune()
+			docker_client.images.prune()
+		except requests.exceptions.ReadTimeout as e:
+			print('An error occurred while pruning: {}'.format(e.what()))
 		
 		if process.stdout != '' or process.stderr == '':
 			return repo + ':' + image_tag, process.stdout
@@ -593,6 +599,13 @@ class AppNB:
 				'id': key,
 				'title': 'Automatically detected using papermill.',
 				'literalDataDomains': [{'dataType':{'name': key_type}}], 
+			})
+		for key in self.stage_in:
+			param = self.parameters[key]
+			proc_dict['inputs'].append({
+				'id': key,
+				'title': 'Stage-in input specified for URL-to-PATH conversion.',
+				'literalDataDomains': [{'dataType':{'name': 'stage_in'}}], 
 			})
 		
 		proc_dict['outputs'] = []
