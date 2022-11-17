@@ -409,8 +409,6 @@ class AppNB:
 			# Fill out a very long dictionary field for stage-in inputs
 			input_dict[key] = {
 				'type': [
-					{'type': 'record', 'name': 'HTTP', 'fields': {'url': 'string'}},
-					{'type': 'record', 'name': 'S3_unsigned', 'fields': {'s3_url': 'string'}},
 					{
 						'type': 'record',
 						'name': 'S3',
@@ -454,6 +452,8 @@ class AppNB:
 							'path': 'File',
 						}
 					},
+					{'type': 'record', 'name': 'HTTP', 'fields': {'url': 'string'}},
+					{'type': 'record', 'name': 'S3_unsigned', 'fields': {'s3_url': 'string'}},
 				],
 			}
 

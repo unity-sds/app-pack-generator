@@ -14,24 +14,6 @@ inputs:
   input_path:
     type:
       - type: record
-        name: HTTP
-        fields:
-          url:
-            type: string
-            inputBinding:
-              position: 1
-              shellQuote: false
-              valueFrom: HTTP "$(self)"
-      - type: record
-        name: S3_unsigned
-        fields:
-          s3_url:
-            type: string
-            inputBinding:
-              position: 1
-              shellQuote: false
-              valueFrom: S3_unsigned "$(self)"
-      - type: record
         name: S3
         fields:
           s3_url:
@@ -124,6 +106,24 @@ inputs:
               position: 1
               shellQuote: false
               valueFrom: Local "$(self.path)"
+      - type: record
+        name: HTTP
+        fields:
+          url:
+            type: string
+            inputBinding:
+              position: 1
+              shellQuote: false
+              valueFrom: HTTP "$(self)"
+      - type: record
+        name: S3_unsigned
+        fields:
+          s3_url:
+            type: string
+            inputBinding:
+              position: 1
+              shellQuote: false
+              valueFrom: S3_unsigned "$(self)"
 
 outputs:
   stdout_txt:
