@@ -122,9 +122,12 @@ class GitHelper:
 		"""Runs the checkout command on this repository.
 		
 		'arg' is either a commit hash, a tag, or a branch name.
+		Initializes any new submodules as well.
 		"""
-		git = self.repo.git
-		git.checkout(arg)
+		self.repo.git.checkout(arg)
+		for submodule in self.repo.submodules:
+			submodule.update(init=True)
+
 		self.checkout = arg
 		self.dirname = self.owner + '/' + self.name + '/' + self.checkout
 
@@ -132,7 +135,7 @@ class GitHelper:
 	def Clone(repolink, dst=os.getcwd()):
 		"""Clones the specified repository using its HTTPS URL."""
 		print('Cloning to ' + dst + '...')
-		return git.Repo.clone_from(repolink, dst, recursive=True)
+		return git.Repo.clone_from(repolink, dst)
 
 	@staticmethod
 	def Message(repodir):
