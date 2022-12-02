@@ -9,7 +9,7 @@ requirements:
   InitialWorkDirRequirement:
     listing:
       - entryname: /tmp/inputs.json
-        entry: $(inputs)
+        entry: $(inputs.input_path)
   NetworkAccess:
     networkAccess: true
 
