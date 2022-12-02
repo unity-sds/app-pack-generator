@@ -1,11 +1,10 @@
 #!/usr/bin/env cwl-runner
-cwlVersion: v1.1
+cwlVersion: v1.2
 class: CommandLineTool
-hints:
-  DockerRequirement:
-    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v7'
 baseCommand: ["python3", "/home/jovyan/stage_out.py"]
 requirements:
+  DockerRequirement:
+    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v8'
   ShellCommandRequirement: {}
   NetworkAccess:
     networkAccess: true

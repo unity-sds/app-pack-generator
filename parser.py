@@ -266,6 +266,11 @@ class AppNB:
 		self.stage_out_cwl = self.ParseAppCWL(os.path.join(templatedir, 'stage_out.cwl'))
 		self.ParseDescriptor(os.path.join(templatedir, 'app_desc.json'))
 
+		# Define the stage-in inputs fields schema and pop its input bindings.
+		self.stage_in_input_type = self.stage_in_cwl['inputs']['input_path']['type'].copy()
+		for record in self.stage_in_input_type:
+			record.pop('inputBinding')
+
 		# TODO - Need more rigorous checks here...
 		self.process = proc if proc is not None and os.path.exists(proc) else 'process.ipynb'
 		if self.process.endswith('.ipynb'):
@@ -401,7 +406,6 @@ class AppNB:
 		self.workflow_cwl['steps'] = {}
 		steps_dict = self.workflow_cwl['steps']
 		for key in self.stage_in:
-			param = self.parameters[key]
 			steps_dict['stage_in_' + key] = {
 				'run': 'stage_in.cwl',
 				'in': {
@@ -409,55 +413,9 @@ class AppNB:
 				},
 				'out': ['output_file'],
 			}
-			# Fill out a very long dictionary field for stage-in inputs
+			# Splice in the type fields for stage-in parameters.
 			input_dict[key] = {
-				'type': [
-					{
-						'type': 'record',
-						'name': 'S3',
-						'fields': {
-							's3_url': 'string',
-							'aws_access_key_id': 'string',
-							'aws_secret_access_key': 'string',
-							'aws_session_token': 'string',
-							'region': 'string',
-						},
-					},
-					{
-						'type': 'record',
-						'name': 'DAAC',
-						'fields': {
-							'url': 'string',
-							'username': 'string',
-							'password': 'string',
-						}
-					},
-					{
-						'type': 'record',
-						'name': 'MAAP',
-						'fields': {
-							'collection_id': 'string',
-							'granule_name': 'string',
-						}
-					},
-					{
-						'type': 'record',
-						'name': 'Role',
-						'fields': {
-							'role_arn': 'string',
-							'source_profile': 'string',
-						}
-					},
-					{
-						'type': 'record',
-						'name': 'Local',
-						'fields': {
-							'path': 'File',
-						}
-					},
-					{'type': 'record', 'name': 'HTTP', 'fields': {'url': 'string'}},
-					{'type': 'record', 'name': 'S3_unsigned', 'fields': {'s3_url': 'string'}},
-				],
+				'type': self.stage_in_input_type,
 			}
 
 		# Create the process step at the workflow level
@@ -514,35 +472,21 @@ class AppNB:
 			os.makedirs(outdir)
 		
 		if self.process.endswith('.sh'):
-			self.appcwl['baseCommand'] = ['sh', self.process]
+			self.appcwl['baseCommand'] = ['sh', self.process, '/tmp/inputs.json']
 
 		# Forward the ordinary parameters to the process step directly
-		self.appcwl['hints']['DockerRequirement']['dockerPull'] = dockerurl
+		self.appcwl['requirements']['DockerRequirement']['dockerPull'] = dockerurl
 		self.appcwl['inputs'] = {}
 		input_dict = self.appcwl['inputs']
 		for key in self.inputs:
 			param = self.parameters[key]
-			input_dict[key] = {
-				'type': Util.GetKeyType(param['inferred_type_name'], param['default']),
-				'inputBinding': {
-					'shellQuote': False,
-					'prefix': '--parameters',
-					'valueFrom': key + ' "$(self)"'
-				},
-			}
+			input_dict[key] = Util.GetKeyType(param['inferred_type_name'], param['default'])
 
-		# Append the stage-in files to the input list with type File for explicit
+		# Append the stage-in files to the input list with type File[] for explicit
 		# forwarding from another container.
 		for key in self.stage_in:
 			param = self.parameters[key]
-			input_dict[key] = {
-				'type': 'File',
-				'inputBinding': {
-					'shellQuote': False,
-					'prefix': '--parameters',
-					'valueFrom': key + ' "$(self.path)"'
-				},
-			}
+			input_dict[key] = 'File[]'
 
 		# Create the outputs field with the output notebook as a default
 		self.appcwl['outputs'] = {

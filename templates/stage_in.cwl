@@ -1,12 +1,15 @@
 #!/usr/bin/env cwl-runner
-cwlVersion: v1.1
+cwlVersion: v1.2
 class: CommandLineTool
-hints:
-  DockerRequirement:
-    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v7'
-baseCommand: ["python3", "/home/jovyan/stage_in.py"]
+baseCommand: ["python3", "/home/jovyan/stage_in.py", "/tmp/inputs.json"]
 requirements:
+  DockerRequirement:
+    dockerPull: 'jplzhan/ci-generated-images:jplzhan.maap-ci-stage-io.v8'
   ShellCommandRequirement: {}
+  InitialWorkDirRequirement:
+    listing:
+      - entryname: /tmp/inputs.json
+        entry: $(inputs)
   NetworkAccess:
     networkAccess: true
 
@@ -14,121 +17,68 @@ inputs:
   input_path:
     type:
       - type: record
-        name: S3
+        inputBinding:
+          valueFrom: S3
         fields:
           s3_url:
-            type: string
-            inputBinding:
-              position: 1
-              shellQuote: false
-              valueFrom: S3 "$(self)"
-          aws_access_key_id:
-            type: string
-            inputBinding:
-              position: 2
-              shellQuote: false
-              valueFrom: "$(self)"
-          aws_secret_access_key:
-            type: string
-            inputBinding:
-              position: 3
-              shellQuote: false
-              valueFrom: "$(self)"
-          aws_session_token:
-            type: string
-            inputBinding:
-              position: 4
-              shellQuote: false
-              valueFrom: "$(self)"
-          region:
-            type: string
-            inputBinding:
-              position: 5
-              shellQuote: false
-              valueFrom: "$(self)"
+            type:
+              - string
+              - string[]
+          aws_access_key_id: string
+          aws_secret_access_key: string
+          aws_session_token: string?
+          region: string?
       - type: record
-        name: DAAC
+        inputBinding:
+          valueFrom: DAAC
         fields:
           url:
-            type: string
-            inputBinding:
-              position: 1
-              shellQuote: false
-              valueFrom: DAAC "$(self)"
-          username:
-            type: string
-            inputBinding:
-              position: 2
-              shellQuote: false
-              valueFrom: "$(self)"
-          password:
-            type: string
-            inputBinding:
-              position: 3
-              shellQuote: false
-              valueFrom: "$(self)"
+            type:
+              - string
+              - string[]
+          username: string
+          password: string
       - type: record
-        name: MAAP
+        inputBinding:
+          valueFrom: MAAP
         fields:
-          collection_id:
-            type: string
-            inputBinding:
-              position: 1
-              shellQuote: false
-              valueFrom: MAAP "$(self)"
-          granule_name:
-            type: string
-            inputBinding:
-              position: 2
-              shellQuote: false
-              valueFrom: "$(self)"
+          collection_id: string
+          granule_name: string
       - type: record
-        name: Role
+        inputBinding:
+          valueFrom: Role
         fields:
-          role_arn:
-            type: string
-            inputBinding:
-              position: 1
-              shellQuote: false
-              valueFrom: Role "$(self)"
-          source_profile:
-            type: string
-            inputBinding:
-              position: 2
-              shellQuote: false
-              valueFrom: "$(self)"
+          role_arn: string
+          source_profile: string
       - type: record
-        name: Local
+        inputBinding:
+          valueFrom: Local
         fields:
           path:
-            type: File
-            inputBinding:
-              position: 1
-              shellQuote: false
-              valueFrom: Local "$(self.path)"
+            type:
+              - File
+              - File[]
       - type: record
-        name: HTTP
+        inputBinding:
+          valueFrom: HTTP
         fields:
           url:
-            type: string
-            inputBinding:
-              position: 1
-              shellQuote: false
-              valueFrom: HTTP "$(self)"
+            type:
+              - string
+              - string[]
       - type: record
-        name: S3_unsigned
+        inputBinding:
+          valueFrom: S3_unsigned
         fields:
           s3_url:
-            type: string
-            inputBinding:
-              position: 1
-              shellQuote: false
-              valueFrom: S3_unsigned "$(self)"
+            type:
+              - string
+              - string[]
 
 outputs:
   stdout_txt:
     type: stdout
   output_file:
-    type: File
+    type: File[]
     outputBinding:
-      glob: inputs/*
+      glob: inputs/*/*

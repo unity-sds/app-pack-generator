@@ -1,6 +1,6 @@
 #!/usr/bin/env cwltool
 
-cwlVersion: v1.1
+cwlVersion: v1.2
 class: Workflow
 $namespaces:
   cwltool: 'http://commonwl.org/cwltool#'
@@ -27,39 +27,95 @@ inputs:
   var_1: 
     type:
       - type: record
-        name: HTTP
         fields:
-          url: string
-      - type: record
-        name: S3_unsigned
-        fields:
-          s3_url: string
-      - type: record
-        name: S3
-        fields:
-          s3_url: string
+          s3_url:
+            type:
+              - string
+              - string[]
           aws_access_key_id: string
           aws_secret_access_key: string
-          aws_session_token: string
-          region: string
+          aws_session_token: string?
+          region: string?
+      - type: record
+        fields:
+          url:
+            type:
+              - string
+              - string[]
+          username: string
+          password: string
+      - type: record
+        fields:
+          collection_id: string
+          granule_name: string
+      - type: record
+        fields:
+          role_arn: string
+          source_profile: string
+      - type: record
+        fields:
+          path:
+            type:
+              - File
+              - File[]
+      - type: record
+        fields:
+          url:
+            type:
+              - string
+              - string[]
+      - type: record
+        fields:
+          s3_url:
+            type:
+              - string
+              - string[]
   var_2:
     type:
       - type: record
-        name: HTTP
         fields:
-          url: string
-      - type: record
-        name: S3_unsigned
-        fields:
-          s3_url: string
-      - type: record
-        name: S3
-        fields:
-          s3_url: string
+          s3_url:
+            type:
+              - string
+              - string[]
           aws_access_key_id: string
           aws_secret_access_key: string
-          aws_session_token: string
-          region: string
+          aws_session_token: string?
+          region: string?
+      - type: record
+        fields:
+          url:
+            type:
+              - string
+              - string[]
+          username: string
+          password: string
+      - type: record
+        fields:
+          collection_id: string
+          granule_name: string
+      - type: record
+        fields:
+          role_arn: string
+          source_profile: string
+      - type: record
+        fields:
+          path:
+            type:
+              - File
+              - File[]
+      - type: record
+        fields:
+          url:
+            type:
+              - string
+              - string[]
+      - type: record
+        fields:
+          s3_url:
+            type:
+              - string
+              - string[]
 
 outputs: {}
 steps:

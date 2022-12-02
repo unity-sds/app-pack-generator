@@ -1,23 +1,24 @@
 #!/usr/bin/env cwl-runner
-cwlVersion: v1.1
+cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: [papermill, /home/jovyan/process.ipynb, output_nb.ipynb]
-hints:
+baseCommand:
+  - papermill
+  - /home/jovyan/process.ipynb
+  - output_nb.ipynb
+  - -f
+  - /tmp/inputs.json
+requirements:
   DockerRequirement:
     dockerPull: marjoluc/hello-world:stable
-requirements:
   ShellCommandRequirement: {}
+  InitialWorkDirRequirement:
+    listing:
+      - entryname: /tmp/inputs.json
+        entry: $(inputs)
   NetworkAccess:
     networkAccess: true
 inputs:
-  input_1:
-    type: string
-    inputBinding:
-      position: 1
-      shellQuote: false
-      prefix: --parameters
-      valueFrom: |
-        input_1 "$(self)"
+  input_1: string
 outputs:
   output_dir:
     outputBinding:
