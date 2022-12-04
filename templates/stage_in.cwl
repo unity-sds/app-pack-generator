@@ -9,11 +9,13 @@ requirements:
   InitialWorkDirRequirement:
     listing:
       - entryname: /tmp/inputs.json
-        entry: $(inputs.input_path)
+        entry: $(inputs)
   NetworkAccess:
     networkAccess: true
 
 inputs:
+  cache_dir: Directory?
+  cache_only: boolean?
   input_path:
     type:
       - type: record
