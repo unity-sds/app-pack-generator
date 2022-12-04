@@ -1,4 +1,5 @@
 import collections
+import copy
 import datetime
 import docker
 import functools
@@ -267,7 +268,7 @@ class AppNB:
 		self.ParseDescriptor(os.path.join(templatedir, 'app_desc.json'))
 
 		# Define the stage-in inputs fields schema and pop its input bindings.
-		self.stage_in_input_type = self.stage_in_cwl['inputs']['input_path']['type'].copy()
+		self.stage_in_input_type = copy.deepcopy(self.stage_in_cwl['inputs']['input_path']['type'])
 		for record in self.stage_in_input_type:
 			record.pop('inputBinding')
 
