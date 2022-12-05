@@ -19,6 +19,7 @@ inputs:
   input_path:
     type:
       - type: record
+        name: S3
         inputBinding:
           valueFrom: S3
         fields:
@@ -31,6 +32,7 @@ inputs:
           aws_session_token: string?
           region: string?
       - type: record
+        name: DAAC
         inputBinding:
           valueFrom: DAAC
         fields:
@@ -41,18 +43,21 @@ inputs:
           username: string
           password: string
       - type: record
+        name: MAAP
         inputBinding:
           valueFrom: MAAP
         fields:
           collection_id: string
           granule_name: string
       - type: record
+        name: Role
         inputBinding:
           valueFrom: Role
         fields:
           role_arn: string
           source_profile: string
       - type: record
+        name: Local
         inputBinding:
           valueFrom: Local
         fields:
@@ -61,6 +66,7 @@ inputs:
               - File
               - File[]
       - type: record
+        name: HTTP
         inputBinding:
           valueFrom: HTTP
         fields:
@@ -69,6 +75,7 @@ inputs:
               - string
               - string[]
       - type: record
+        name: S3_unsigned
         inputBinding:
           valueFrom: S3_unsigned
         fields:
