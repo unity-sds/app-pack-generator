@@ -126,8 +126,7 @@ class GitHelper:
 		Initializes any new submodules as well.
 		"""
 		self.repo.git.checkout(arg)
-		for submodule in self.repo.submodules:
-			submodule.update(init=True)
+		self.repo.git.submodule('update', '--init')
 
 		self.checkout = arg
 		self.dirname = self.owner + '/' + self.name + '/' + self.checkout
