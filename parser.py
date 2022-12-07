@@ -335,9 +335,11 @@ class AppNB:
 		print(self.parameters)
 
 		for key in list(self.parameters.keys()):
-			if self.parameters[key]['inferred_type_name'] in ['stage-in', 'stage_in']:
+			param = self.parameters[key]
+			inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
+			if inferred_type in ['stage-in', 'stage_in']:
 				self.stage_in.append(key)
-			elif self.parameters[key]['inferred_type_name'] in ['stage-out', 'stage_out']:
+			elif inferred_type in ['stage-out', 'stage_out']:
 				self.outputs.append(key)
 			else:
 				self.inputs.append(key)
