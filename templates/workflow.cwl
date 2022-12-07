@@ -4,6 +4,8 @@ cwlVersion: v1.2
 class: Workflow
 $namespaces:
   cwltool: 'http://commonwl.org/cwltool#'
+requirements:
+  StepInputExpressionRequirement: {}
 inputs:
   stage_out:
     type:

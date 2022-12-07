@@ -399,13 +399,19 @@ class AppNB:
 				],
 			},
 			'cache_dir': 'Directory?',
+			'cache_only': {
+				'type': 'boolean',
+				'default': False,
+			},
 			'parameters': {
-				'type': 'record',
-				'name': 'parameters',
-				'fields': {},
+				'type': {
+					'type': 'record',
+					'name': 'parameters',
+					'fields': {},
+				},
 			},
 		}
-		input_dict = self.workflow_cwl['inputs']['parameters']['fields']
+		input_dict = self.workflow_cwl['inputs']['parameters']['type']['fields']
 		for key in self.inputs:
 			param = self.parameters[key]
 			input_dict[key] = Util.GetKeyType(param['inferred_type_name'], param['default'])
@@ -418,8 +424,11 @@ class AppNB:
 				'run': 'stage_in.cwl',
 				'in': {
 					'cache_dir': 'cache_dir',
-					'cache_only': False,
-					'input_path': 'parameters.{}'.format(key),
+					'cache_only': 'cache_only',
+					'input_path': {
+						'source': 'parameters',
+						'valueFrom': '$(self.{})'.format(key),
+					},
 				},
 				'out': ['output_file'],
 			}
@@ -437,7 +446,10 @@ class AppNB:
 		for key in self.stage_in:
 			process_dict['in'][key] = 'stage_in_' + key + '/output_file'
 		for key in self.inputs:
-			process_dict['in'][key] = 'parameters.{}'.format(key)
+			process_dict['in'][key] = {
+				'source': 'parameters',
+				'valueFrom': '$(self.{})'.format(key),
+			}
 		for key in self.outputs:
 			process_dict['out'].append(key)
 		steps_dict['process'] = process_dict
