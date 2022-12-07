@@ -475,11 +475,11 @@ class AppNB:
 			raise Exception('AppNB.GenerateCacheCWL must be called after AppNB.GenerateWorkflowCWL.')
 
 		# This is caching workflow is a subset of the workflow CWL, pop extraneous elements
-		self.cache_workflow_cwl['steps']['process'].pop()
-		self.cache_workflow_cwl['steps']['stage_out'].pop()
-		self.cache_workflow_cwl['inputs']['stage_out'].pop()
+		self.cache_workflow_cwl['steps'].pop('process')
+		self.cache_workflow_cwl['steps'].pop('stage_out')
+		self.cache_workflow_cwl['inputs'].pop('stage_out')
 		for key in self.inputs:
-			self.cache_workflow_cwl['inputs']['parameters']['fields'][key].pop()
+			self.cache_workflow_cwl['inputs']['parameters']['fields'].pop(key)
 
 		for key in self.cache_workflow_cwl['steps']:
 			self.cache_workflow_cwl['steps'][key]['in']['cache_only'] = True
