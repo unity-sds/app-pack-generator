@@ -493,11 +493,9 @@ class AppNB:
 		self.cache_workflow_cwl['steps'].pop('process')
 		self.cache_workflow_cwl['steps'].pop('stage_out')
 		self.cache_workflow_cwl['inputs'].pop('stage_out')
+		self.cache_workflow_cwl['inputs']['cache_only']['default'] = False
 		for key in self.inputs:
 			self.cache_workflow_cwl['inputs']['parameters']['type']['fields'].pop(key)
-
-		for key in self.cache_workflow_cwl['steps']:
-			self.cache_workflow_cwl['steps'][key]['in']['cache_only'] = True
 
 		# Generate the stage-in CWL as is, no need for modification
 		fname = os.path.join(outdir, 'cache_workflow.cwl')
