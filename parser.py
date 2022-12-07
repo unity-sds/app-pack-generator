@@ -491,7 +491,7 @@ class AppNB:
 		self.cache_workflow_cwl['steps'].pop('stage_out')
 		self.cache_workflow_cwl['inputs'].pop('stage_out')
 		for key in self.inputs:
-			self.cache_workflow_cwl['inputs']['parameters']['fields'].pop(key)
+			self.cache_workflow_cwl['inputs']['parameters']['type']['fields'].pop(key)
 
 		for key in self.cache_workflow_cwl['steps']:
 			self.cache_workflow_cwl['steps'][key]['in']['cache_only'] = True
