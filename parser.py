@@ -414,7 +414,8 @@ class AppNB:
 		input_dict = self.workflow_cwl['inputs']['parameters']['type']['fields']
 		for key in self.inputs:
 			param = self.parameters[key]
-			input_dict[key] = Util.GetKeyType(param['inferred_type_name'], param['default'])
+			inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
+			input_dict[key] = Util.GetKeyType(inferred_type, param['default'])
 		
 		# Create a new stage-in step at the workflow level for every stage-in input
 		self.workflow_cwl['steps'] = {}
@@ -531,7 +532,8 @@ class AppNB:
 		input_dict = self.appcwl['inputs']
 		for key in self.inputs:
 			param = self.parameters[key]
-			input_dict[key] = Util.GetKeyType(param['inferred_type_name'], param['default'])
+			inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
+			input_dict[key] = Util.GetKeyType(inferred_type, param['default'])
 
 		# Append the stage-in files to the input list with type File[] for explicit
 		# forwarding from another container.
@@ -591,7 +593,8 @@ class AppNB:
 		proc_dict['inputs'] = []
 		for key in self.inputs:
 			param = self.parameters[key]
-			key_type = Util.GetKeyType(param['inferred_type_name'], param['default']),
+			inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
+			key_type = Util.GetKeyType(inferred_type, param['default'])
 			proc_dict['inputs'].append({
 				'id': key,
 				'title': 'Automatically detected using papermill.',
