@@ -536,9 +536,13 @@ class AppNB:
 			input_dict[key] = Util.GetKeyType(inferred_type, param['default'])
 
 		# Append the stage-in files to the input list with type File[] for explicit
-		# forwarding from another container.
+		# forwarding from another container. Enable them to be modified in-place.
 		for key in self.stage_in:
 			input_dict[key] = 'File[]'
+			self.appcwl['requirements']['InitialWorkDirRequirement']['listing'].append({
+				'entry': '$(inputs.{})'.format(key),
+				'writable': True,
+			})
 
 		# Create the outputs field with the output notebook as a default
 		self.appcwl['outputs'] = {

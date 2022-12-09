@@ -15,6 +15,8 @@ requirements:
     listing:
       - entryname: /tmp/inputs.json
         entry: $(inputs)
+  InplaceUpdateRequirement:
+    inplaceUpdate: true
   NetworkAccess:
     networkAccess: true
 inputs:

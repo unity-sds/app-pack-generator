@@ -10,6 +10,10 @@ requirements:
     listing:
       - entryname: /tmp/inputs.json
         entry: $(inputs)
+      - entry: $(inputs.cache_dir)
+        writable: true
+  InplaceUpdateRequirement:
+    inplaceUpdate: true
   NetworkAccess:
     networkAccess: true
 
