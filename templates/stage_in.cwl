@@ -11,6 +11,7 @@ requirements:
       - entryname: /tmp/inputs.json
         entry: $(inputs)
       - entry: $(inputs.cache_dir)
+        entryname: $(inputs.cache_dir.path)
         writable: true
   InplaceUpdateRequirement:
     inplaceUpdate: true

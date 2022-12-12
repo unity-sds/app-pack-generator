@@ -541,6 +541,7 @@ class AppNB:
 			input_dict[key] = 'File[]'
 			self.appcwl['requirements']['InitialWorkDirRequirement']['listing'].append({
 				'entry': '$(inputs.{})'.format(key),
+				'entryname': '$(inputs.{}.path)'.format(key),
 				'writable': True,
 			})
 
