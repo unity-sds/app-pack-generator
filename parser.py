@@ -539,11 +539,6 @@ class AppNB:
 		# forwarding from another container. Enable them to be modified in-place.
 		for key in self.stage_in:
 			input_dict[key] = 'File[]'
-			self.appcwl['requirements']['InitialWorkDirRequirement']['listing'].append({
-				'entry': '$(inputs.{})'.format(key),
-				'entryname': '$(inputs.{}.path)'.format(key),
-				'writable': True,
-			})
 
 		# Create the outputs field with the output notebook as a default
 		self.appcwl['outputs'] = {
