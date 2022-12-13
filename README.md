@@ -26,6 +26,7 @@ If you are using .ipynb files as your executable, the input parameters will be a
 input_1 = 12.5
 string_var = 'abcdefg'
 integer_var = 86 #type: int
+input_file = [{'path': '/path/to/file'}] # type: stage-in
 ```
 
 By default, the notebook is assumed to be called `process.ipynb` and located at the top of your repository (you can override this by using the `process` property in the payload you submit).
@@ -40,7 +41,26 @@ image = 'image.png' # type: stage-out
 wildcard = 'wildcard_*.log' # type: stage_out
 ```
 
-Similarly, stage-in inputs can be specified using the `stage_in` (or `stage-in`) type hint. These parameters are expected to refer to a relative file path. When deploying the job, they will be submitted as a URL, which will be downloaded by the stage-in script and then injected as a relative file path into the notebook.
+Similarly, stage-in inputs can be specified using the `stage_in` (or `stage-in`) type hint. These parameters are expected to refer to a relative file path. When deploying the job, they will be submitted as a URL, which will be downloaded by the stage-in script and then injected as a dictionary with the following form into the notebook:
+
+```py
+input_file = [{
+    "basename": "0_geoBoundaries-GAB-ADM0.geojson",
+    "checksum": "sha1$001e7d353bd8143e1315d30ab6aed44139c8f344",
+    "class": "File",
+    "dirname": "/var/lib/cwl/stg36ad3228-566a-4426-90f7-ed42f53bb4e0",
+    "http://commonwl.org/cwltool#generation": 0,
+    "location": "file:///data/home/hysdsops/zhan/artifact-deposit-repo/jplzhan/gedi-subset/main/output-nbjb75r8/inputs/0/0_geoBoundaries-GAB-ADM0.geojson",
+    "nameext": ".geojson",
+    "nameroot": "geoBoundaries-GAB-ADM0",
+    "path": "/var/lib/cwl/stg36ad3228-566a-4426-90f7-ed42f53bb4e0/0_geoBoundaries-GAB-ADM0.geojson",
+    "size": 51350
+}]
+
+print(input_file[0]["path"]) # output: /var/lib/cwl/stg36ad3228-566a-4426-90f7-ed42f53bb4e0/0_geoBoundaries-GAB-ADM0.geojson
+```
+
+The `path` varaible contains the absolute file path of the staged-in file. The stage-in variable is a list of descriptors containing these paths. This is to accommodate a dynamic number of stage-in URLs per stage-in input.
 
 ## Creating a CI/CD Job
 Users can trigger a CI/CD build by sending a POST request to [this URL](https://repo.dit.maap-project.org/api/v4/projects/19/trigger/pipeline), with a payload following this example:
