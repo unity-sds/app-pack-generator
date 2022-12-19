@@ -11,7 +11,7 @@ requirements:
       - entryname: /tmp/inputs.json
         entry: $(inputs)
       - entry: $(inputs.cache_dir)
-        entryname: $(inputs.cache_dir.path)
+        entryname: $(runtime.outdir)/cache_dir
         writable: true
   InplaceUpdateRequirement:
     inplaceUpdate: true
@@ -19,7 +19,11 @@ requirements:
     networkAccess: true
 
 inputs:
-  cache_dir: Directory?
+  cache_dir:
+    type: Directory?
+    inputBinding:
+      shellQuote: false
+      valueFrom: -c $(runtime.outdir)/cache_dir
   cache_only: boolean?
   input_path:
     type:
@@ -103,7 +107,11 @@ inputs:
 outputs:
   stdout_txt:
     type: stdout
-  output_file:
+  cache_out:
+    type: Directory?
+    outputBinding:
+      glob: $(runtime.outdir)/cache_dir
+  output_files:
     type: File[]
     outputBinding:
       glob: inputs/*/*

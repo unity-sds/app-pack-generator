@@ -126,20 +126,20 @@ steps:
     in:
       input_path: var_1
     out:
-      - output_file
+      - output_files
 
   stage_in_var_2:
     run: stage_in.cwl
     in:
       input_path: var_2
     out:
-      - output_file
+      - output_files
 
   process:
     run: process.cwl
     in:
-      var_1: stage_in_var_1/output_file
-      var_2: stage_in_var_2/output_file
+      var_1: stage_in_var_1/output_files
+      var_2: stage_in_var_2/output_files
     out:
       - output_dir
       - output_nb

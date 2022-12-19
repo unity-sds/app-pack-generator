@@ -422,23 +422,27 @@ class AppNB:
 		# Create a new stage-in step at the workflow level for every stage-in input
 		self.workflow_cwl['steps'] = {}
 		steps_dict = self.workflow_cwl['steps']
+		prev_step = None
 		for key in self.stage_in:
-			steps_dict['stage_in_' + key] = {
+			step_name = 'stage_in_' + key
+			steps_dict[step_name] = {
 				'run': 'stage_in.cwl',
 				'in': {
-					'cache_dir': 'cache_dir',
+					'cache_dir': 'cache_dir' if prev_step is None else '{}/cache_out'.format(prev_step),
 					'cache_only': 'cache_only',
 					'input_path': {
 						'source': 'parameters',
 						'valueFrom': '$(self.{})'.format(key),
 					},
 				},
-				'out': ['output_file'],
+				'out': ['cache_out', 'output_files'],
 			}
 			# Splice in the type fields for stage-in parameters.
 			input_dict[key] = {
 				'type': self.stage_in_input_type,
 			}
+			# Daisy chain stage-in steps so that caching will actually work
+			prev_step = step_name
 
 		# Create the process step at the workflow level
 		process_dict = {
@@ -447,7 +451,7 @@ class AppNB:
 			'out': ['output_nb', 'output_dir'],
 		}
 		for key in self.stage_in:
-			process_dict['in'][key] = 'stage_in_' + key + '/output_file'
+			process_dict['in'][key] = 'stage_in_' + key + '/output_files'
 		for key in self.inputs:
 			process_dict['in'][key] = {
 				'source': 'parameters',
