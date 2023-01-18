@@ -302,7 +302,7 @@ class AppNB:
 		"""
 		nb_fname = os.path.join(self.repo.directory, nb_name)
 		if not os.path.exists(nb_fname):
-			msg = 'No process.ipynb was detected in the directory \'{}\'. Now aborting...' % (self.repo.directory)
+			msg = f'No process.ipynb was detected in the directory \'{self.repo.directory}\'. Now aborting...'
 			raise RuntimeError(msg)
 		
 		print('Opening', nb_fname + '...')
@@ -653,7 +653,9 @@ def main(args):
 	"""
 	min_args = 3
 	if len(args) < min_args:
-		print('Not enough arguments (min. {}). Now aborting...' % (min_args))
+		print(f'Not enough arguments (min. {min_args}). Now aborting...')
+		return 1
+
 	original_dir = os.getcwd()
 	repodir = os.path.join(original_dir, 'algorithm')
 	repolink = args[1]
