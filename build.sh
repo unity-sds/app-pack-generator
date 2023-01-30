@@ -4,6 +4,7 @@ ParserDir="/home/ubuntu/zhan/app-pack-generator"
 Parser="parser.py"
 PythonExe="python3"
 ActivateVEnv="source $ParserDir/env/bin/activate"
+DockerRegistry="jplzhan/ci-generated-images"
 
 TestingDir="/home/zhan/downsample-landsat"
 ARTIFACT_DIR="$WorkingDir/artifact-deposit-repo"
@@ -14,7 +15,7 @@ echo "$(ls -la $ParserDir)"
 GIT_SSH_COMMAND="ssh -i $ARTIFACT_SSH" git clone "$ARTIFACT_URL" "$ARTIFACT_DIR"
 
 $ActivateVEnv
-env ARTIFACT_DIR=$ARTIFACT_DIR $PythonExe "$Parser" "$repository" "$checkout"
+env ARTIFACT_DIR=$ARTIFACT_DIR $PythonExe "$Parser" "$repository" "$checkout" "$DockerRegistry"
 deactivate
 
 cd $ARTIFACT_DIR
