@@ -302,7 +302,7 @@ class AppNB:
 		"""
 		nb_fname = os.path.join(self.repo.directory, nb_name)
 		if not os.path.exists(nb_fname):
-			msg = f'No process.ipynb was detected in the directory \'{self.repo.directory}\'. Now aborting...'
+			msg = f'No file named {nb_name} was detected in the directory \'{self.repo.directory}\'. Now aborting...'
 			raise RuntimeError(msg)
 		
 		print('Opening', nb_fname + '...')
