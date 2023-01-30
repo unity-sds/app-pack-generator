@@ -196,13 +196,11 @@ class DockerUtil:
 		password = os.getenv('DOCKER_PASS')
 		self.docker_client.login(username=username, password=password)
 
-	def Repo2Docker(self, workingdir=os.path.join(os.getcwd(), '.docker')):
+	def Repo2Docker(self):
 		"""Calls repo2docker on the local git directory to generate the Docker image.
-		
+    
 		No further modifications are made to the docker image.
 		"""
-		if not os.path.isdir(workingdir):
-			os.makedirs(workingdir)
 
 		# Prune all dangling containers and images to reclaim space and prevent cache usage.
 		if self.do_prune:
@@ -688,7 +686,7 @@ def main(args):
 	return_code = 0
 	try:
 		docker_util = DockerUtil(repo, do_prune=True)
-		image_tag = docker_util.Repo2Docker(outdir)
+		image_tag = docker_util.Repo2Docker()
 		dockerurl = docker_util.PushImage(image_tag, docker_registry)
 
 		nb = AppNB(repo, proc=os.getenv('process'))
