@@ -211,6 +211,12 @@ class Docker:
 		if len(image_tag) > 128:
 			image_tag = image_tag[0:128]
 
+		# Clean up image_tag to confirm to Docker rules
+		# 1. Make sure all characters are lower case
+		# 2. Remove repeated periods (ie ..) in cases where repo.name is empty
+		image_tag = image_tag.lower()
+		image_tag = image_tag.replace('..', '.')
+
 		cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
 			'--no-run', '--debug', '--image-name', image_tag, repo.directory]
 		if REPO2DOCKER_ENV is not None and os.path.exists(REPO2DOCKER_ENV):
