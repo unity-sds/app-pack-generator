@@ -379,57 +379,15 @@ class AppNB:
 		"""
 		self.workflow_cwl['outputs'] = {}
 
-		# Fill out the inputs field for running the workflow CWL
-		self.workflow_cwl['inputs'] = {
-			'stage_out': {
-				'type': [
-					{
-						'type': 'record',
-						'name': 'STAK',
-						'fields': {
-							's3_url': 'string',
-							'aws_access_key_id': 'string',
-							'aws_secret_access_key': 'string',
-							'aws_session_token': 'string',
-							'region_name': 'string',
-						},
-					},
-					{
-						'type': 'record',
-						'name': 'LTAK',
-						'fields': {
-							's3_url': 'string',
-							'aws_config': 'Directory',
-						},
-					},
-					{
-						'type': 'record',
-						'name': 'IAM',
-						'fields': {
-							's3_url': 'string',
-						},
-					},
-				],
-			},
-			'cache_dir': 'Directory?',
-			'cache_only': {
-				'type': 'boolean',
-				'default': False,
-			},
-			'parameters': {
-
-				'type': {
-					'type': 'record',
-					'name': 'parameters',
-					'fields': {},
-				},
-			},
-		}
+		# Fill out the inputs field for running the workflow CWL, make updates to the template
 		input_dict = self.workflow_cwl['inputs']['parameters']['type']['fields']
 		for key in self.inputs:
-			param = self.parameters[key]
-			inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
-			input_dict[key] = Util.GetKeyType(inferred_type, param['default'])
+			if key not in input_dict and not key in self.workflow_cwl['inputs']:
+				param = self.parameters[key]
+				inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
+				input_dict[key] = Util.GetKeyType(inferred_type, param['default'])
+			else:
+				print(f"Warning: {key} defined in notebook but already present in template, not overwriting workflow template definition")
 		
 		# Create a new stage-in step at the workflow level for every stage-in input
 		self.workflow_cwl['steps'] = {}
@@ -466,10 +424,14 @@ class AppNB:
 		for key in self.stage_in:
 			process_dict['in'][key] = 'stage_in_' + key + '/output_files'
 		for key in self.inputs:
-			process_dict['in'][key] = {
-				'source': 'parameters',
-				'valueFrom': '$(self.{})'.format(key),
-			}
+			if key in input_dict:
+				process_dict['in'][key] = {
+					'source': 'parameters',
+					'valueFrom': '$(self.{})'.format(key),
+				}
+			else:
+				process_dict['in'][key] = key
+
 		for key in self.outputs:
 			process_dict['out'].append(key)
 		steps_dict['process'] = process_dict
@@ -512,7 +474,8 @@ class AppNB:
 		self.cache_workflow_cwl['inputs'].pop('stage_out')
 		self.cache_workflow_cwl['inputs']['cache_only']['default'] = True
 		for key in self.inputs:
-			self.cache_workflow_cwl['inputs']['parameters']['type']['fields'].pop(key)
+			if key in self.cache_workflow_cwl['inputs']['parameters']['type']['fields']:
+				self.cache_workflow_cwl['inputs']['parameters']['type']['fields'].pop(key)
 
 		# Generate the stage-in CWL as is, no need for modification
 		fname = os.path.join(outdir, 'cache_workflow.cwl')
@@ -543,31 +506,25 @@ class AppNB:
 		if self.process.endswith('.sh'):
 			self.appcwl['baseCommand'] = ['sh', self.process, '/tmp/inputs.json']
 
-		# Forward the ordinary parameters to the process step directly
+		# Set correct URL for process Docker container
 		self.appcwl['requirements']['DockerRequirement']['dockerPull'] = dockerurl
-		self.appcwl['inputs'] = {}
+
+		# Forward the ordinary parameters to the process step directly
 		input_dict = self.appcwl['inputs']
 		for key in self.inputs:
-			param = self.parameters[key]
-			inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
-			input_dict[key] = Util.GetKeyType(inferred_type, param['default'])
+			if key not in input_dict:
+				param = self.parameters[key]
+				inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
+				input_dict[key] = Util.GetKeyType(inferred_type, param['default'])
+			else:
+				print(f"Warning: {key} defined in notebook but already present in template, not overwriting process template definition")
 
 		# Append the stage-in files to the input list with type File[] for explicit
 		# forwarding from another container. Enable them to be modified in-place.
 		for key in self.stage_in:
 			input_dict[key] = 'File[]'
 
-		# Create the outputs field with the output notebook as a default
-		self.appcwl['outputs'] = {
-			'output_nb': {
-				'type': 'File',
-				'outputBinding': {'glob': 'output_nb.ipynb'},
-			},
-			'output_dir': {
-				'type': 'Directory',
-				'outputBinding': {'glob': 'output'},
-			},
-		}
+		# Add defined stage-out parameters
 		# TODO - Is this necessary?
 		output_dict = self.appcwl['outputs']
 		for key in self.outputs:

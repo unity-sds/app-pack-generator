@@ -9,115 +9,35 @@ requirements:
 inputs:
   stage_out:
     type:
-      - type: record
-        name: STAK
-        fields:
-          aws_access_key_id: string
-          aws_secret_access_key: string
-          aws_session_token: string
-          region_name: string
-          s3_url: string
-      - type: record
-        name: LTAK
-        fields:
-          s3_url: string
-          aws_config: Directory
-      - type: record
-        name: IAM
-        fields:
-          s3_url: string
-  var_1: 
+    - fields:
+        aws_access_key_id: string
+        aws_secret_access_key: string
+        aws_session_token: string
+        region_name: string
+        s3_url: string
+      name: STAK
+      type: record
+    - fields:
+        aws_config: Directory
+        s3_url: string
+      name: LTAK
+      type: record
+    - fields:
+        s3_url: string
+      name: IAM
+      type: record
+  cache_dir: Directory?
+  cache_only:
+    default: false
+    type: boolean
+  output_directory:
+    type: string
+    default: output
+  parameters:
     type:
-      - type: record
-        fields:
-          s3_url:
-            type:
-              - string
-              - string[]
-          aws_access_key_id: string
-          aws_secret_access_key: string
-          aws_session_token: string?
-          region_name: string?
-      - type: record
-        fields:
-          url:
-            type:
-              - string
-              - string[]
-          username: string
-          password: string
-      - type: record
-        fields:
-          collection_id: string
-          granule_name: string
-      - type: record
-        fields:
-          role_arn: string
-          source_profile: string
-      - type: record
-        fields:
-          path:
-            type:
-              - File
-              - File[]
-      - type: record
-        fields:
-          url:
-            type:
-              - string
-              - string[]
-      - type: record
-        fields:
-          s3_url:
-            type:
-              - string
-              - string[]
-  var_2:
-    type:
-      - type: record
-        fields:
-          s3_url:
-            type:
-              - string
-              - string[]
-          aws_access_key_id: string
-          aws_secret_access_key: string
-          aws_session_token: string?
-          region: string?
-      - type: record
-        fields:
-          url:
-            type:
-              - string
-              - string[]
-          username: string
-          password: string
-      - type: record
-        fields:
-          collection_id: string
-          granule_name: string
-      - type: record
-        fields:
-          role_arn: string
-          source_profile: string
-      - type: record
-        fields:
-          path:
-            type:
-              - File
-              - File[]
-      - type: record
-        fields:
-          url:
-            type:
-              - string
-              - string[]
-      - type: record
-        fields:
-          s3_url:
-            type:
-              - string
-              - string[]
+      name: parameters
+      type: record
+      fields: {}
 
 outputs: {}
 steps:
