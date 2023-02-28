@@ -1,20 +1,15 @@
-import collections
+import os
 import copy
+import yaml
+import requests
 import datetime
-import docker
-import functools
+import subprocess
+
 import git
 import json
-import jsonschema
-import os
+import docker
 import papermill
-import requests
-import shutil
-import subprocess
-import sys
-import tempfile
-import yaml
-
+import jsonschema
 
 """
 Loads the .ipynb jsonschema for validation purposes (TBD).
@@ -622,85 +617,3 @@ class AppNB:
         with open(fname, 'w', encoding='utf-8') as f:
             json.dump(self.descriptor, f, ensure_ascii=False, indent=4)
         return fname
-
-
-def main(args):
-    """Accepts exactly 2 arguments (3 in total when including the script name):
-
-            1 - The HTTPS link to the repository which will be cloned.
-            2 - The identifier the repository will run 'git checkout' to.
-
-    Optional environment variables which may be defined:
-            1 - "process": Relative path to an existing .ipynb or .sh file.
-            2 - "env": Relative path or URL to an existing file compatible with repo2docker.
-    """
-    min_args = 4
-    if len(args) < min_args:
-        print(f'Not enough arguments (min. {min_args}). Now aborting...')
-        return 1
-
-    original_dir = os.getcwd()
-    repodir = os.path.join(original_dir, 'algorithm')
-    repolink = args[1]
-    checkout = args[2]
-    docker_registry = args[3]
-
-    print('Arguments:')
-    for arg in args:
-        print(arg)
-
-    # Clone the repository to the specified directory and change to it.
-    if repolink == '':
-        msg = 'No repository URL was provided, cannot clone. Now exiting...'
-        raise RuntimeError(msg)
-    repo = GitHelper(repolink, dst=repodir)
-    repo.Checkout(checkout)
-    os.chdir(repodir)
-
-    # Create the destination subdirectory for the artifacts using the link and checkout identifier.
-    print('ARTIFACT_DIR:', ARTIFACT_DIR)
-    print('repo.dirname:', repo.dirname)
-    outdir = os.path.join(ARTIFACT_DIR, repo.dirname)
-
-    # Generate artifacts within the output directory.
-    return_code = 0
-    try:
-        docker_util = DockerUtil(repo, do_prune=True)
-        image_tag = docker_util.Repo2Docker()
-        dockerurl = docker_util.PushImage(image_tag, docker_registry)
-
-        nb = AppNB(repo, proc=os.getenv('process'))
-        files = nb.Generate(outdir, dockerurl)
-
-        # Move the generated files to the artifact directory and commit them.
-        os.chdir(outdir)
-        Util.System(['git', 'config', 'user.name', 'Automated'])
-        Util.System(['git', 'config', 'user.email', 'N/A'])
-        for fname in files:
-            print('Adding artifact:', fname)
-
-            proc = Util.System(['git', 'add', fname])
-            print(proc.stdout)
-            print(proc.stderr)
-            proc.check_returncode()
-
-        proc = Util.System(
-            ['git', 'commit', '-m', 'Update from CI/CD server.'])
-        print(proc.stdout)
-        print(proc.stderr)
-
-    except (jsonschema.exceptions.ValidationError, jsonschema.exceptions.SchemaError) as e:
-        print(e)
-        return_code = 1
-    except RuntimeError as e:
-        print(e)
-        return_code = 1
-
-    os.chdir(original_dir)
-    return return_code
-
-
-if __name__ == '__main__':
-    time_ms, ret = Util.TimeFunction(main, sys.argv)
-    print('Execution Time:', time_ms, 'ms (returned', str(ret) + ')')
-    exit(ret)
