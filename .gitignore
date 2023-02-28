@@ -1,5 +1,5 @@
-generated*/*
-.generated*/*
-env/*
-.token/*
+env/
+app_pack_generator.egg-info/
+build/
 .vs/*
+*.swp
