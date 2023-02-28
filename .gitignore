@@ -3,3 +3,4 @@ app_pack_generator.egg-info/
 build/
 .vs/*
 *.swp
+__pycache__/
