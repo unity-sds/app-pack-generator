@@ -5,12 +5,11 @@ import docker
 
 from .util import Util
 
-REPO2DOCKER_ENV = os.getenv('env')
-
 class DockerUtil:
 
-    def __init__(self, repo, do_prune=True):
+    def __init__(self, repo, repo_config=None, do_prune=True):
         self.repo = repo
+        self.repo_config = repo_config
         self.do_prune = do_prune
 
         self.docker_client = docker.from_env()
@@ -43,20 +42,29 @@ class DockerUtil:
         image_tag = image_tag.lower()
         image_tag = image_tag.replace('..', '.')
 
-        cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-               '--no-run', '--debug', '--image-name', image_tag, self.repo.directory]
-        if REPO2DOCKER_ENV is not None and os.path.exists(REPO2DOCKER_ENV):
+        if self.repo_config is not None:
+            # A specific repo2docker config file has been specified, see if it exists
+            # relative to the repository path
+            repo_config_local = os.path.join(self.repo.directory, self.repo_config)
+
+            # If the repo2docker config file does not exist inside the repo already, assume it is a URL
+            # and try to download it
+            if not os.path.exists(repo_config_local):
+                response = Util.DownloadLink(self.repo_config)
+                if response is not None:
+                    with open(os.path.join(repo_config_local), 'w') as f:
+                        f.write(response.text)
+                else:
+                    msg = 'Failed to download the specified configuration file: ' + REPO2DOCKER_ENV
+                    raise RuntimeError(msg)
+
             cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-                   '--no-run', '--debug', '--image-name', '--config',
-                   REPO2DOCKER_ENV, image_tag, self.repo.directory]
-        elif REPO2DOCKER_ENV is not None:
-            response = Util.DownloadLink(REPO2DOCKER_ENV)
-            if response is not None:
-                with open(os.path.join(self.repo.directory, 'Dockerfile'), 'w') as f:
-                    f.write(response.text)
-            else:
-                msg = 'Failed to download the specified configuration file: ' + REPO2DOCKER_ENV
-                raise RuntimeError(msg)
+                   '--no-run', '--debug', '--image-name', image_tag, '--config',
+                   repo_config_local, self.repo.directory]
+        else:
+            # Let repo2docker find the config to use automatically
+            cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
+                   '--no-run', '--debug', '--image-name', image_tag, self.repo.directory]
 
         process = Util.System(cmd)
         print(process.stdout)
