@@ -32,7 +32,11 @@ class DockerUtil:
                 print('An error occurred while pruning: {}'.format(e.what()))
 
         # Repo2Docker call using the command line.
-        image_tag = self.repo.owner + '.' + self.repo.name + '.' + self.repo.checkout
+        if self.repo.owner is not None:
+            image_tag = self.repo.owner + '/' + self.repo.name + ':' + self.repo.checkout
+        else:
+            image_tag = self.repo.name + ':' + self.repo.checkout
+
         if len(image_tag) > 128:
             image_tag = image_tag[0:128]
 
@@ -41,6 +45,8 @@ class DockerUtil:
         # 2. Remove repeated periods (ie ..) in cases where repo.name is empty
         image_tag = image_tag.lower()
         image_tag = image_tag.replace('..', '.')
+
+        print(f"Building Docker image named {image_tag}")
 
         if self.repo_config is not None:
             # A specific repo2docker config file has been specified, see if it exists

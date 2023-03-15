@@ -1,6 +1,7 @@
 import os
 
 import git
+from giturlparse import parse as parse_giturl
 
 from .util import Util
 
@@ -11,11 +12,20 @@ class GitHelper:
         self.url = url
         self.directory = dst
 
-        split = url.replace('.git', '').split('/')
-        self.owner = split[-2].strip()
-        self.name = split[-1].strip()
+        self.repo_attrs = parse_giturl(url)
+
+        if hasattr(self.repo_attrs, "owner"):
+            self.owner = self.repo_attrs.owner
+        else:
+            self.owner = None
+
+        # If no repo attribute then likely a local path to a git repo
+        if hasattr(self.repo_attrs, "repo"):
+            self.name = self.repo_attrs.repo
+        else:
+            self.name = os.path.basename(url.rstrip("/"))
+
         self.checkout = 'HEAD'
-        self.dirname = self.owner + '/' + self.name + '/' + self.checkout
 
     def Checkout(self, arg):
         """Runs the checkout command on this repository.
@@ -27,7 +37,6 @@ class GitHelper:
         self.repo.git.submodule('update', '--init')
 
         self.checkout = arg
-        self.dirname = self.owner + '/' + self.name + '/' + self.checkout
 
     @staticmethod
     def Clone(repolink, dst=os.getcwd()):

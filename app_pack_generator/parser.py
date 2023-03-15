@@ -13,7 +13,6 @@ from .git import GitHelper
 Loads the .ipynb jsonschema for validation purposes (TBD).
 """
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
-ARTIFACT_DIR = os.getenv('ARTIFACT_DIR')
 SCHEMA_LIST = [os.path.join(LOCAL_PATH,
                             'schemas/nbformat.v4.{v}.schema.json'.format(v=i)) for i in range(0, 6)]
 INPUT_TAG = 'parameters'
@@ -50,8 +49,7 @@ class AppNB:
             record.pop('inputBinding')
 
         # TODO - Need more rigorous checks here...
-        self.process = proc if proc is not None and os.path.exists(
-            proc) else 'process.ipynb'
+        self.process = proc if proc is not None and os.path.exists(proc) else 'process.ipynb'
         if self.process.endswith('.ipynb'):
             self.ParseNotebook(self.process)
         elif not self.process.endswith('.sh'):
@@ -337,10 +335,15 @@ class AppNB:
         if not os.path.isdir(outdir):
             os.makedirs(outdir)
         deposit_url = 'https://raw.githubusercontent.com/jplzhan/artifact-deposit-repo'
-        tag = self.repo.dirname
+        tag = self.repo.name
         proc_dict = self.descriptor['processDescription']['process']
-        proc_dict['id'] = self.repo.owner + '.' + \
-            self.repo.name + '.' + self.repo.checkout
+
+        if self.repo.owner is not None:
+            proc_dict['id'] = self.repo.owner + '.' + \
+                self.repo.name + '.' + self.repo.checkout
+        else:
+            proc_dict['id'] = self.repo.name + '.' + self.repo.checkout
+ 
         proc_dict['title'] = GitHelper.Message(self.repo.directory).strip()
         proc_dict['owsContext']['offering']['content']['href'] = deposit_url + \
             '/main/' + tag + '/workflow.cwl'
