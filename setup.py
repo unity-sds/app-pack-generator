@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 # https://packaging.python.org/guides/single-sourcing-package-version/
 VERSION = {}
 
-with open("./app_pack_generator/__init__.py") as fp:
+with open("./app_pack_generator/version.py") as fp:
     # pylint: disable=W0122
     exec(fp.read(), VERSION)
 
