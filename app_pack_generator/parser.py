@@ -7,7 +7,6 @@ import papermill
 import jsonschema
 
 from .util import Util
-from .git import GitHelper
 
 """
 Loads the .ipynb jsonschema for validation purposes (TBD).

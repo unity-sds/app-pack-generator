@@ -1,33 +1,85 @@
 import os
+import logging
 
 import git
 from giturlparse import parse as parse_giturl
 
 from .util import Util
 
-class GitHelper:
-    def __init__(self, url, dst=os.getcwd()):
-        """Manages a freshly cloned git repository."""
-        self.repo = GitHelper.Clone(url, dst)
-        self.url = url
-        self.directory = dst
+HEX_SHA_LENGTH = 8
 
-        self.repo_attrs = parse_giturl(url)
+logger = logging.getLogger(__name__)
 
-        if hasattr(self.repo_attrs, "owner"):
-            self.owner = self.repo_attrs.owner
+class GitRepoError(Exception):
+    pass
+
+class GitManager(object):
+    def __init__(self, source, dest=None):
+        """Manages a information about a git repository for application notebooks"""
+
+        self.source_location = source
+        self.source_attrs = parse_giturl(self.source_location)
+
+        if dest is None:
+            # If destination is none allow for source to be an existing directory with a git repository
+
+            if not os.path.exists(os.path.join(source, ".git")):
+                raise GitRepoError(f"In order for destination to be left empty {source} needs to be an existing git repository")
+
+            logger.debug(f"Using existing Git repository from source path {source}")
+            self.repo = git.Repo(source)
+
+        elif os.path.exists(os.path.join(dest, ".git")):
+            # If destination an existing git repository only allow is the source does not exist meaning it is likely a URL
+            # passed for information purposes
+            if os.path.exists(source):
+                raise GitRepoError("Source {source} is not a URL but destination path {dest} is an existing git repository")
+
+            logger.debug(f"Using existing Git repository from destination path {dest} with source {source}")
+            self.repo = git.Repo(dest)
+
+        elif os.path.exists(dest) and os.path.isfile(dest):
+            # Flag an error if the destination is a file
+            raise GitRepoError(f"Destination path {dest} is a file not a directory")
+
+        elif os.path.exists(dest) and len(os.listdir(dest)) > 0:
+            # Do not allow cloning into an existing non empty directory
+            raise GitRepoError(f"Destination path {dest} exists and is a non empty directory")
+
         else:
-            self.owner = None
+            # Hopefully by this point we have a source that is a directory or a URL and destination
+            # is an empty or non existent directory
+            logger.debug(f"Cloning Git repository from {source} to {dest}")
+
+            self.repo = git.Repo.clone_from(source, dest)
+
+    @property
+    def directory(self):
+        return self.repo.working_tree_dir 
+
+    @property
+    def owner(self):
+
+        if hasattr(self.source_attrs, "owner"):
+            return self.source_attrs.owner
+        else:
+            return None
+
+    @property
+    def name(self):
 
         # If no repo attribute then likely a local path to a git repo
-        if hasattr(self.repo_attrs, "repo"):
-            self.name = self.repo_attrs.repo
+        if hasattr(self.source_attrs, "repo"):
+            return self.source_attrs.repo
         else:
-            self.name = os.path.basename(url.rstrip("/"))
+            return os.path.basename(self.directory.rstrip("/"))
 
-        self.checkout = 'HEAD'
+    @property
+    def commit_identifier(self):
 
-    def Checkout(self, arg):
+        return self.repo.commit().hexsha[:HEX_SHA_LENGTH]
+
+    def checkout(self, arg):
         """Runs the checkout command on this repository.
 
         'arg' is either a commit hash, a tag, or a branch name.
@@ -35,60 +87,3 @@ class GitHelper:
         """
         self.repo.git.checkout(arg)
         self.repo.git.submodule('update', '--init')
-
-        self.checkout = arg
-
-    @staticmethod
-    def Clone(repolink, dst=os.getcwd()):
-        """Clones the specified repository using its HTTPS URL."""
-        print('Cloning to ' + dst + '...')
-        return git.Repo.clone_from(repolink, dst)
-
-    @staticmethod
-    def Message(repodir):
-        """Return the commit message for the current commit."""
-        # git.Repo(localdir)
-        process = Util.System(['git', 'log', '-1', '--pretty=%B'])
-        if process.stdout != '':
-            return process.stdout.strip()
-        return process.stderr.strip()
-
-    @staticmethod
-    def CommitHash(repodir):
-        """Return the commit message for the current commit."""
-        # git.Repo(localdir)
-        process = Util.System(['git', 'rev-parse', 'HEAD'])
-        if process.stdout != '':
-            return process.stdout.strip()
-        return process.stderr.strip()
-
-    @staticmethod
-    def RemoteURL(repodir, https=True):
-        """Return the remote URL for the current repository."""
-        process = Util.System(['git', 'config', '--get', 'remote.origin.url'])
-        if process.stdout != '':
-            if https:
-                process.stdout = process.stdout.strip()
-                process.stdout = process.stdout.replace(':', '/')
-                process.stdout = process.stdout.replace('git@', 'https://')
-            return process.stdout.strip()
-        return process.stderr.strip()
-
-    @staticmethod
-    def Push(repodir):
-        """Pushes all changes from the specified repository."""
-        repo = git.Repo(repodir)
-        repo.git.add(update=True)
-        repo.index.commit('Automatic push from Jenkins.')
-        origin = repo.remote(name='origin')
-        origin.push()
-
-    @staticmethod
-    def GetTag(repodir):
-        """Gets the current repository tag associated with the current commit."""
-        process = Util.System(['git', 'describe', '--tags', '--abbrev=0'])
-        if process.stdout != '':
-            return process.stdout.strip()
-        return process.stderr.strip()
-
-
