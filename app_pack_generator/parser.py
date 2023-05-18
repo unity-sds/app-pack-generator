@@ -341,9 +341,9 @@ class AppNB:
             proc_dict['id'] = self.repo.owner + '.' + \
                 self.repo.name + '.' + self.repo.checkout
         else:
-            proc_dict['id'] = self.repo.name + '.' + self.repo.checkout
+            proc_dict['id'] = self.repo.name + '.' + self.repo.commit_identifier
  
-        proc_dict['title'] = GitHelper.Message(self.repo.directory).strip()
+        proc_dict['title'] = self.repo.commit_message
         proc_dict['owsContext']['offering']['content']['href'] = deposit_url + \
             '/main/' + tag + '/workflow.cwl'
 

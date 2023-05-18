@@ -33,7 +33,7 @@ class GitManager(object):
             # If destination an existing git repository only allow is the source does not exist meaning it is likely a URL
             # passed for information purposes
             if os.path.exists(source):
-                raise GitRepoError("Source {source} is not a URL but destination path {dest} is an existing git repository")
+                raise GitRepoError(f"Source {source} is not a URL but destination path {dest} is an existing git repository")
 
             logger.debug(f"Using existing Git repository from destination path {dest} with source {source}")
             self.repo = git.Repo(dest)
@@ -78,6 +78,11 @@ class GitManager(object):
     def commit_identifier(self):
 
         return self.repo.commit().hexsha[:HEX_SHA_LENGTH]
+
+    @property
+    def commit_message(self):
+
+        return self.repo.commit().message
 
     def checkout(self, arg):
         """Runs the checkout command on this repository.
