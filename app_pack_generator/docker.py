@@ -85,6 +85,8 @@ class DockerUtil:
         logger.debug(process.stdout)
         logger.debug(process.stderr)
 
+        return self.image_tag
+
     def push_image(self, registry_url):
 
         # Save the newly created image to a tarball if the build succeeded.
