@@ -1,23 +1,47 @@
 import os
 import requests
+import logging
 
 import docker
 
 from .util import Util
 
+logger = logging.getLogger(__name__)
+
 class DockerUtil:
 
-    def __init__(self, repo, repo_config=None, do_prune=True):
-        self.repo = repo
+    def __init__(self, git_mgr, repo_config=None, do_prune=True):
+        self.git_mgr = git_mgr
         self.repo_config = repo_config
         self.do_prune = do_prune
 
         self.docker_client = docker.from_env()
-        username = os.getenv('DOCKER_USER')
-        password = os.getenv('DOCKER_PASS')
-        self.docker_client.login(username=username, password=password)
+        #username = os.getenv('DOCKER_USER')
+        #password = os.getenv('DOCKER_PASS')
+        #self.docker_client.login(username=username, password=password)
 
-    def Repo2Docker(self):
+    @property
+    def image_tag(self):
+
+        if self.git_mgr.owner is not None:
+            image_tag = self.git_mgr.owner + '/' + self.git_mgr.name
+        else:
+            image_tag = self.git_mgr.name 
+
+        if len(image_tag) > 128:
+            image_tag = image_tag[0:128]
+
+        image_tag += ':' + self.git_mgr.commit_identifier
+
+        # Clean up image_tag to confirm to Docker rules
+        # 1. Make sure all characters are lower case
+        # 2. Remove repeated periods (ie ..) in cases where git_mgr.name is empty
+        image_tag = image_tag.lower()
+        image_tag = image_tag.replace('..', '.')
+
+        return image_tag
+
+    def repo2docker(self):
         """Calls repo2docker on the local git directory to generate the Docker image.
 
         No further modifications are made to the docker image.
@@ -29,29 +53,14 @@ class DockerUtil:
                 self.docker_client.containers.prune()
                 self.docker_client.images.prune()
             except requests.exceptions.ReadTimeout as e:
-                print('An error occurred while pruning: {}'.format(e.what()))
+                logger.error('An error occurred while pruning: {}'.format(e.what()))
 
-        # Repo2Docker call using the command line.
-        if self.repo.owner is not None:
-            image_tag = self.repo.owner + '/' + self.repo.name + ':' + self.repo.checkout
-        else:
-            image_tag = self.repo.name + ':' + self.repo.checkout
-
-        if len(image_tag) > 128:
-            image_tag = image_tag[0:128]
-
-        # Clean up image_tag to confirm to Docker rules
-        # 1. Make sure all characters are lower case
-        # 2. Remove repeated periods (ie ..) in cases where repo.name is empty
-        image_tag = image_tag.lower()
-        image_tag = image_tag.replace('..', '.')
-
-        print(f"Building Docker image named {image_tag}")
+        logger.debug(f"Building Docker image named {self.image_tag}")
 
         if self.repo_config is not None:
             # A specific repo2docker config file has been specified, see if it exists
             # relative to the repository path
-            repo_config_local = os.path.join(self.repo.directory, self.repo_config)
+            repo_config_local = os.path.join(self.git_mgr.directory, self.repo_config)
 
             # If the repo2docker config file does not exist inside the repo already, assume it is a URL
             # and try to download it
@@ -65,26 +74,30 @@ class DockerUtil:
                     raise RuntimeError(msg)
 
             cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-                   '--no-run', '--debug', '--image-name', image_tag, '--config',
-                   repo_config_local, self.repo.directory]
+                   '--no-run', '--debug', '--image-name', self.image_tag, '--config',
+                   repo_config_local, self.git_mgr.directory]
         else:
             # Let repo2docker find the config to use automatically
             cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-                   '--no-run', '--debug', '--image-name', image_tag, self.repo.directory]
+                   '--no-run', '--debug', '--image-name', self.image_tag, self.git_mgr.directory]
 
         process = Util.System(cmd)
-        print(process.stdout)
-        print(process.stderr)
+        logger.debug(process.stdout)
+        logger.debug(process.stderr)
 
-        return image_tag
-
-    def PushImage(self, image_tag, registry):
+    def push_image(self, registry_url):
 
         # Save the newly created image to a tarball if the build succeeded.
-        image = self.docker_client.images.get(image_tag)
-        image.tag(registry, tag=image_tag)
-        for line in self.docker_client.api.push(registry, tag=image_tag, stream=True, decode=True):
-            print(line)
+        image = self.docker_client.images.get(self.image_tag)
+
+        reg_image_dest = f"{registry_url}/{self.image_tag}"
+
+        logger.debug(f"Pushing {self.image_tag} to {reg_image_dest}")
+
+        image.tag(reg_image_dest)
+
+        for line in self.docker_client.images.push(reg_image_dest, stream=True, decode=True):
+            logger.debug(line)
 
         if self.do_prune:
             self.docker_client.images.remove(image.id, force=True)
@@ -92,7 +105,6 @@ class DockerUtil:
                 self.docker_client.containers.prune()
                 self.docker_client.images.prune()
             except requests.exceptions.ReadTimeout as e:
-                print('An error occurred while pruning: {}'.format(e.what()))
+                logger.error('An error occurred while pruning: {}'.format(e.what()))
 
-        return registry + ':' + image_tag
-
+        return reg_image_dest
