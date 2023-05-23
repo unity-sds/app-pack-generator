@@ -339,7 +339,7 @@ class AppNB:
 
         if self.repo.owner is not None:
             proc_dict['id'] = self.repo.owner + '.' + \
-                self.repo.name + '.' + self.repo.checkout
+                self.repo.name + '.' + self.repo.commit_identifier
         else:
             proc_dict['id'] = self.repo.name + '.' + self.repo.commit_identifier
  
