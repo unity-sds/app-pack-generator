@@ -87,14 +87,17 @@ class DockerUtil:
 
         return self.image_tag
 
-    def push_image(self, registry_url):
+    def push_image(self, registry_url, image_tag=None):
+
+        if image_tag is None:
+            image_tag = self.image_tag
 
         # Save the newly created image to a tarball if the build succeeded.
-        image = self.docker_client.images.get(self.image_tag)
+        image = self.docker_client.images.get(image_tag)
 
-        reg_image_dest = f"{registry_url}/{self.image_tag}"
+        reg_image_dest = f"{registry_url}/{image_tag}"
 
-        logger.debug(f"Pushing {self.image_tag} to {reg_image_dest}")
+        logger.debug(f"Pushing {image_tag} to {reg_image_dest}")
 
         image.tag(reg_image_dest)
 
