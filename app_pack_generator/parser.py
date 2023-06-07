@@ -1,12 +1,16 @@
 import os
 import copy
-import yaml
-
 import json
+import logging
+
+import yaml
 import papermill
 import jsonschema
+from tabulate import tabulate
 
 from .util import Util
+
+logger = logging.getLogger(__name__)
 
 """
 Loads the .ipynb jsonschema for validation purposes (TBD).
@@ -55,8 +59,7 @@ class AppNB:
             msg = 'Unsupported file format submitted for entrypoint.'
             raise RuntimeError(msg)
         else:
-            print('Using .sh file with name \'' +
-                  self.process + '\' as executable process...')
+            logger.debug(f'Using .sh file with name "{self.process}" as executable process')
 
     def _read_yaml_template(self, app_cwl_fname):
         """Loads the template application CWL."""
@@ -81,13 +84,12 @@ class AppNB:
             msg = f'No file named {nb_name} was detected in the directory \'{self.repo.directory}\'. Now aborting...'
             raise RuntimeError(msg)
 
-        print('Opening', nb_fname + '...')
+        logger.debug(f'Reading notebook: "{nb_fname}"')
         with open(nb_fname, 'r') as f:
             self.notebook = json.load(f)
 
         # Validate the notebook using the list of supported v4.X schemas.
-        print('Validating \'' + nb_name +
-              '\' as a valid v4.0 - v4.5 Jupyter notebook...')
+        logger.debug(f'Validating {nb_name} as a valid v4.0 - v4.5 Jupyter notebook')
         validation_success = False
         for fname in SCHEMA_LIST:
             if os.path.exists(fname):
@@ -96,23 +98,21 @@ class AppNB:
                         schema = json.load(f)
                         jsonschema.validate(
                             instance=self.notebook, schema=schema)
-                        print('Successfully validated \'' +
-                              nb_fname + '\' using ' + fname + '.')
+                        logger.debug(f'Successfully validated using "{os.path.basename(fname)}"')
                         validation_success = True
                         break
                 except (jsonschema.exceptions.ValidationError, jsonschema.exceptions.SchemaError) as e:
-                    print(fname + ' failed...')
+                    logger.error(f'Failed validation using "{os.path.basename(fname)}"')
                     continue
             else:
-                print(fname + ' does not exist.')
+                logger.error(f'Validation file "{fname}" does not exist.')
+
         if not validation_success:
-            msg = 'Failed to validate \'' + nb_fname + \
-                '\' as a v4.0 - v4.5 Jupyter Notebook...'
+            msg = f'Failed to validate "{nb_fname}" as a v4.0 - v4.5 Jupyter Notebook...'
             raise RuntimeError(msg)
 
         # Inspect notebook parameters using papermill and parse them into a list.
         self.parameters = papermill.inspect_notebook(nb_fname)
-        print(self.parameters)
 
         for key in list(self.parameters.keys()):
             param = self.parameters[key]
@@ -123,6 +123,25 @@ class AppNB:
                 self.outputs.append(key)
             else:
                 self.inputs.append(key)
+
+    def parameter_summary(self):
+
+        # Derive header for table from results from papermill directly by adding all the keys found to the header
+        headers = []
+        for param_info in self.parameters.values():
+            for info_name in param_info.keys():
+                if info_name not in headers:
+                    headers.append(info_name)
+
+        # Build up rows of the table using the header values as the columns
+        table_data = []
+        for param_info in self.parameters.values():
+            table_row = []
+            for column_name in headers:
+                table_row.append(param_info[column_name])
+            table_data.append(table_row)
+
+        return tabulate(table_data, headers=headers)
 
     def generate_all(self, outdir=os.path.join(os.getcwd(), '.generated/'), dockerurl="undefined"):
         """Calls all of the application CWL generators as well as the application descriptor generator.
@@ -156,8 +175,7 @@ class AppNB:
                 input_dict[key] = Util.GetKeyType(
                     inferred_type, param['default'])
             else:
-                print(
-                    f"Warning: {key} defined in notebook but already present in template, not overwriting workflow template definition")
+                logger.warning(f"{key} defined in notebook but already present in template, not overwriting workflow template definition")
 
         # Create a new stage-in step at the workflow level for every stage-in input
         self.workflow_cwl['steps'] = {}
@@ -291,8 +309,7 @@ class AppNB:
                 input_dict[key] = Util.GetKeyType(
                     inferred_type, param['default'])
             else:
-                print(
-                    f"Warning: {key} defined in notebook but already present in template, not overwriting process template definition")
+                logger.warning(f"{key} defined in notebook but already present in template, not overwriting process template definition")
 
         # Append the stage-in files to the input list with type File[] for explicit
         # forwarding from another container. Enable them to be modified in-place.

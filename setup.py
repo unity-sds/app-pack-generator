@@ -26,6 +26,7 @@ setup(
         "jsonschema>=4.17.3",
         "jupyter-repo2docker>=2022.10.0",
         "giturlparse==0.10.0",
+        "tabulate==0.9.0",
     ],
     classifiers=[
         "Development Status :: 1 - Planning",
