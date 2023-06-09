@@ -2,72 +2,120 @@
 
 cwlVersion: v1.2
 class: Workflow
+
 $namespaces:
   cwltool: 'http://commonwl.org/cwltool#'
+
 requirements:
+  SubworkflowFeatureRequirement: {}
   StepInputExpressionRequirement: {}
+  InlineJavascriptRequirement: {}
+  NetworkAccess:
+    networkAccess: true
+
 inputs:
+
+  ##########
+  # Stage In
+  stage_in:
+    type:
+      type: record
+      fields:
+        stac_json: File
+        download_type: string # DAAC or S3
+        edl_username: string
+        edl_password: string
+    default:
+      download_type: DAAC
+      edl_username: ""
+      edl_password: ""
+      
+  ###########
+  # Stage Out
   stage_out:
     type:
-    - fields:
+      type: record
+      fields:
+        collection_id: string
         aws_access_key_id: string
         aws_secret_access_key: string
         aws_session_token: string
-        region_name: string
-        s3_url: string
-      name: STAK
-      type: record
-    - fields:
-        aws_config: Directory
-        s3_url: string
-      name: LTAK
-      type: record
-    - fields:
-        s3_url: string
-      name: IAM
-      type: record
-  cache_dir: Directory?
-  cache_only:
-    default: false
-    type: boolean
-  output_directory:
-    type: string
-    default: output
+        unity_username: string
+        unity_password: string
+        unity_client_id: string
+        unity_dapa_api: string
+        staging_bucket: string
+
+  # Workflow
   parameters:
     type:
-      name: parameters
       type: record
       fields: {}
 
 outputs: {}
-steps:
-  stage_in_var_1:
-    run: stage_in.cwl
-    in:
-      input_path: var_1
-    out:
-      - output_files
 
-  stage_in_var_2:
+steps:
+  stage_in:
     run: stage_in.cwl
+
     in:
-      input_path: var_2
-    out:
-      - output_files
+      stac_json:
+        source: stage_in
+        valueFrom: $(self.stac_json)
+      download_type:
+        source: stage_in
+        valueFrom: $(self.download_type)
+      edl_username:
+        source: stage_in
+        valueFrom: $(self.edl_username)
+      edl_password:
+        source: stage_in
+        valueFrom: $(self.edl_password)
+
+    out: [stage_in_catalog_file, stage_in_download_dir]
 
   process:
     run: process.cwl
-    in:
-      var_1: stage_in_var_1/output_files
-      var_2: stage_in_var_2/output_files
+
+    in: {}
+
     out:
-      - output_dir
-      - output_nb
+      - process_output_dir
+      - process_catalog_file
+      - process_output_nb
 
   stage_out:
     run: stage_out.cwl
+
     in:
-      output_path: stage_out
-      output_dir: process/output_dir
-      output_nb: process/output_nb
-    out: []
+      aws_access_key_id:
+        source: stage_out
+        valueFrom: $(self.aws_access_key_id)
+      aws_secret_access_key:
+        source: stage_out
+        valueFrom: $(self.aws_secret_access_key)
+      aws_session_token:
+        source: stage_out
+        valueFrom: $(self.aws_session_token)
+      unity_username:
+        source: stage_out
+        valueFrom: $(self.unity_username)
+      unity_password: 
+        source: stage_out
+        valueFrom: $(self.unity_password)
+      unity_client_id:
+        source: stage_out
+        valueFrom: $(self.unity_client_id)
+      unity_dapa_api:
+        source: stage_out
+        valueFrom: $(self.unity_dapa_api)
+      collection_id:
+        source: stage_out
+        valueFrom: $(self.collection_id)
+      staging_bucket:
+        source: stage_out
+        valueFrom: $(self.staging_bucket)
+      catalog_file: process/process_catalog_file
+      output_dir: process/process_output_dir
+
+    out: [stage_out_results] 

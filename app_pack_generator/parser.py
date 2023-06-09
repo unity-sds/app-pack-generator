@@ -21,43 +21,45 @@ SCHEMA_LIST = [os.path.join(LOCAL_PATH,
 INPUT_TAG = 'parameters'
 OUTPUT_TAG = 'outputFiles'
 
+class ApplicationError(Exception):
+    pass
+
 class AppNB:
     """Defines a parsed Jupyter Notebook read as a JSON file."""
 
     def __init__(self, repo, proc=None, templatedir=os.path.join(LOCAL_PATH, 'templates')):
-        self.notebook = {}
-        self.stage_in = []
-        self.parameters = {}
-        self.inputs = []
-        self.outputs = []
+
         self.repo = repo
-        self.descriptor = {}
-        self.appcwl = {}
-        self.workflow_cwl = self._read_yaml_template(
-            os.path.join(templatedir, 'workflow.cwl'))
-        self.stage_in_cwl = self._read_yaml_template(
-            os.path.join(templatedir, 'stage_in.cwl'))
-        self.appcwl = self._read_yaml_template(
-            os.path.join(templatedir, 'process.cwl'))
-        self.stage_out_cwl = self._read_yaml_template(
-            os.path.join(templatedir, 'stage_out.cwl'))
+
+        # Parsed notebook
+        self.notebook = {}
+
+        # All parameters parsed from the notebook
+        self.parameters = {}
+
+        # Parameters labeled for supplying the stage in/stage out STAC catalog file names
+        # The stage in catalog file is written by the stage in step
+        # The stage out catalog file is written by the application
+        self.stage_in_param = None
+        self.stage_out_param = None
+
+        # Free arguments that are papermill parameters not associated with stage
+        self.arguments = []
+
+        # Template CWL and descriptor files
+        self.workflow_cwl = self._read_yaml_template( os.path.join(templatedir, 'workflow.cwl'))
+        self.stage_in_cwl = self._read_yaml_template( os.path.join(templatedir, 'stage_in.cwl'))
+        self.process_cwl = self._read_yaml_template( os.path.join(templatedir, 'process.cwl'))
+        self.stage_out_cwl = self._read_yaml_template( os.path.join(templatedir, 'stage_out.cwl'))
 
         self.descriptor = self._read_json_template(os.path.join(templatedir, 'app_desc.json'))
-
-        # Define the stage-in inputs fields schema and pop its input bindings.
-        self.cache_workflow_cwl = None
-        self.stage_in_input_type = copy.deepcopy(
-            self.stage_in_cwl['inputs']['input_path']['type'])
-        for record in self.stage_in_input_type:
-            record.pop('inputBinding')
 
         # TODO - Need more rigorous checks here...
         self.process = proc if proc is not None and os.path.exists(proc) else 'process.ipynb'
         if self.process.endswith('.ipynb'):
             self.parse_notebook(self.process)
         elif not self.process.endswith('.sh'):
-            msg = 'Unsupported file format submitted for entrypoint.'
-            raise RuntimeError(msg)
+            raise ApplicationError('Unsupported file format submitted for entrypoint.')
         else:
             logger.debug(f'Using .sh file with name "{self.process}" as executable process')
 
@@ -81,8 +83,7 @@ class AppNB:
         """
         nb_fname = os.path.join(self.repo.directory, nb_name)
         if not os.path.exists(nb_fname):
-            msg = f'No file named {nb_name} was detected in the directory \'{self.repo.directory}\'. Now aborting...'
-            raise RuntimeError(msg)
+            raise ApplicationError(f'No file named {nb_name} was detected in the directory \'{self.repo.directory}\'. Now aborting...')
 
         logger.debug(f'Reading notebook: "{nb_fname}"')
         with open(nb_fname, 'r') as f:
@@ -108,21 +109,27 @@ class AppNB:
                 logger.error(f'Validation file "{fname}" does not exist.')
 
         if not validation_success:
-            msg = f'Failed to validate "{nb_fname}" as a v4.0 - v4.5 Jupyter Notebook...'
-            raise RuntimeError(msg)
+            raise ApplicationError(f'Failed to validate "{nb_fname}" as a v4.0 - v4.5 Jupyter Notebook...')
 
         # Inspect notebook parameters using papermill and parse them into a list.
         self.parameters = papermill.inspect_notebook(nb_fname)
 
-        for key in list(self.parameters.keys()):
-            param = self.parameters[key]
+        for param in self.parameters.values():
             inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
+
             if inferred_type in ['stage-in', 'stage_in']:
-                self.stage_in.append(key)
+                if self.stage_in_param is None:
+                    self.stage_in_param = param
+                else:
+                    raise ApplicationError(f"Only one stage-in parameter allowed per notebook")
+
             elif inferred_type in ['stage-out', 'stage_out']:
-                self.outputs.append(key)
+                if self.stage_out_param is None:
+                    self.stage_out_param = param
+                else:
+                    raise ApplicationError(f"Only one stage-out parameter allowed per notebook")
             else:
-                self.inputs.append(key)
+                self.arguments.append(param)
 
     def parameter_summary(self):
 
@@ -151,7 +158,6 @@ class AppNB:
 
         generated_files = []
         generated_files.append(self.generate_workflow_cwl(outdir))
-        generated_files.append(self.generate_cache_cwl(outdir))
         generated_files.append(self.generate_stage_in_cwl(outdir))
         generated_files.append(self.generate_process_cwl(outdir, dockerurl))
         generated_files.append(self.generate_stage_out_cwl(outdir=outdir))
@@ -166,110 +172,41 @@ class AppNB:
         """
         self.workflow_cwl['outputs'] = {}
 
-        # Fill out the inputs field for running the workflow CWL, make updates to the template
+        # Preocess step section of of workflow
+        process_dict = self.workflow_cwl['steps']['process']
+
+        # Add non stage-in/stage-out inputs to the master CWL input/outputs as parameters
         input_dict = self.workflow_cwl['inputs']['parameters']['type']['fields']
-        for key in self.inputs:
-            if key not in input_dict and not key in self.workflow_cwl['inputs']:
-                param = self.parameters[key]
-                inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
-                input_dict[key] = Util.GetKeyType(
-                    inferred_type, param['default'])
-            else:
-                logger.warning(f"{key} defined in notebook but already present in template, not overwriting workflow template definition")
+        for param in self.arguments:
+            name = param['name']
+            inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
+            input_dict[name] = Util.GetKeyType(inferred_type, param['default'])
 
-        # Create a new stage-in step at the workflow level for every stage-in input
-        self.workflow_cwl['steps'] = {}
-        steps_dict = self.workflow_cwl['steps']
-        prev_step = None
-        for key in self.stage_in:
-            step_name = 'stage_in_' + key
-            steps_dict[step_name] = {
-                'run': 'stage_in.cwl',
-                'in': {
-                    'cache_dir': 'cache_dir' if prev_step is None else '{}/cache_out'.format(prev_step),
-                    'cache_only': 'cache_only',
-                    'input_path': {
-                        'source': 'parameters',
-                        'valueFrom': '$(self.{})'.format(key),
-                    },
-                },
-                'out': ['cache_out', 'output_files'],
+            process_dict['in'][name] = {
+                'source': 'parameters',
+                'valueFrom': f'$(self.{name})'
             }
-            # Splice in the type fields for stage-in parameters.
-            input_dict[key] = {
-                'type': self.stage_in_input_type,
-            }
-            # Daisy chain stage-in steps so that caching will actually work
-            prev_step = step_name
 
-        # Create the process step at the workflow level
-        process_dict = {
-            'run': 'process.cwl',
+        # Connect the stage-in parameter to stage_in's catalog filename output
+        # Otherwise remove stage in from the workflow
+        if self.stage_in_param is not None:
+            name = self.stage_in_param['name']
+            process_dict['in'][name] = 'stage_in/stage_in_catalog_file'
+            process_dict['in']['download_dir'] = 'stage_in/stage_in_download_dir'
+        else:
+            # No stage-in connected to notebook, delete
+            del self.workflow_cwl['steps']['stage_in']
+            del self.workflow_cwl['inputs']['stage_in']
 
-            'in': {},
-            'out': ['output_nb', 'output_dir'],
-        }
-        for key in self.stage_in:
-            process_dict['in'][key] = 'stage_in_' + key + '/output_files'
-        for key in self.inputs:
-            if key in input_dict:
-                process_dict['in'][key] = {
-                    'source': 'parameters',
-                    'valueFrom': '$(self.{})'.format(key),
-                }
-            else:
-                process_dict['in'][key] = key
-
-        for key in self.outputs:
-            process_dict['out'].append(key)
-        steps_dict['process'] = process_dict
-
-        # Create the stage-out step at the workflow level for eveyr stage-out output
-        steps_dict['stage_out'] = {
-            'run': 'stage_out.cwl',
-            'in': {
-                'output_path': 'stage_out',
-                'output_nb': 'process/output_nb',
-                'output_dir': 'process/output_dir',
-            },
-            'out': [],
-        }
-        output_dict = steps_dict['stage_out']
-        for key in self.outputs:
-            output_dict['in'][key] = 'process/' + key
-
-        # Duplicate the parsed workflow
-        self.cache_workflow_cwl = copy.deepcopy(self.workflow_cwl)
+        # Remove stage-out if not defined in the notebook
+        # The connection of the parameter given to the notebook is done inside the process.cwl
+        if self.stage_out_param is None:
+            del self.workflow_cwl['steps']['stage_out']
+            del self.workflow_cwl['inputs']['stage_out']
+            self.workflow_cwl['steps']['process']['out'].remove('process_catalog_file')
 
         fname = os.path.join(outdir, 'workflow.cwl')
         Util.WriteYMLFile(fname, self.workflow_cwl)
-        return fname
-
-    def generate_cache_cwl(self, outdir):
-        """Generates the caching CWL.
-
-        Returns the absolute path of the file generated by this function.
-        """
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
-
-        if not isinstance(self.cache_workflow_cwl, dict):
-            raise Exception(
-                'AppNB.generate_cache_cwl must be called after AppNB.generate_workflow_cwl.')
-
-        # This is caching workflow is a subset of the workflow CWL, pop extraneous elements
-        self.cache_workflow_cwl['steps'].pop('process')
-        self.cache_workflow_cwl['steps'].pop('stage_out')
-        self.cache_workflow_cwl['inputs'].pop('stage_out')
-        self.cache_workflow_cwl['inputs']['cache_only']['default'] = True
-        for key in self.inputs:
-            if key in self.cache_workflow_cwl['inputs']['parameters']['type']['fields']:
-                self.cache_workflow_cwl['inputs']['parameters']['type']['fields'].pop(
-                    key)
-
-        # Generate the stage-in CWL as is, no need for modification
-        fname = os.path.join(outdir, 'cache_workflow.cwl')
-        Util.WriteYMLFile(fname, self.cache_workflow_cwl)
         return fname
 
     def generate_stage_in_cwl(self, outdir):
@@ -294,39 +231,39 @@ class AppNB:
             os.makedirs(outdir)
 
         if self.process.endswith('.sh'):
-            self.appcwl['baseCommand'] = [
+            self.process_cwl['baseCommand'] = [
                 'sh', self.process, '/tmp/inputs.json']
 
         # Set correct URL for process Docker container
-        self.appcwl['requirements']['DockerRequirement']['dockerPull'] = dockerurl
+        self.process_cwl['requirements']['DockerRequirement']['dockerPull'] = dockerurl
 
-        # Forward the ordinary parameters to the process step directly
-        input_dict = self.appcwl['inputs']
-        for key in self.inputs:
-            if key not in input_dict:
-                param = self.parameters[key]
-                inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
-                input_dict[key] = Util.GetKeyType(
-                    inferred_type, param['default'])
-            else:
-                logger.warning(f"{key} defined in notebook but already present in template, not overwriting process template definition")
+        # Forward the ordinary argument parameters to the process step directly
+        input_dict = self.process_cwl['inputs']
+        for param in self.arguments:
+            name = param['name']
+            inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
+            input_dict[name] = Util.GetKeyType(inferred_type, param['default'])
 
-        # Append the stage-in files to the input list with type File[] for explicit
-        # forwarding from another container. Enable them to be modified in-place.
-        for key in self.stage_in:
-            input_dict[key] = 'File[]'
+        # Append the stage-in file to the input list with type File for explicit
+        # forwarding from another container
+        if self.stage_in_param is not None:
+            name = self.stage_in_param['name']
+            input_dict[name] = 'File'
 
-        # Add defined stage-out parameters
-        # TODO - Is this necessary?
-        output_dict = self.appcwl['outputs']
-        for key in self.outputs:
-            output_dict[key] = {
-                'type': 'File',
-                'outputBinding': {'glob': self.parameters[key]['default']},
+            input_dict['download_dir'] = 'Directory'
+
+        # Connect the stage-out parameter to the name of the file specified in the template as output
+        if self.stage_out_param is not None:
+            name = self.stage_out_param['name']
+            input_dict[name] = {
+                'type': 'string',
+                'default': self.process_cwl['outputs']['process_catalog_file']['outputBinding']['glob'],
             }
+        else:
+            del self.process_cwl['outputs']['process_catalog_file']
 
         fname = os.path.join(outdir, 'process.cwl')
-        Util.WriteYMLFile(fname, self.appcwl)
+        Util.WriteYMLFile(fname, self.process_cwl)
         return fname
 
     def generate_stage_out_cwl(self, outdir):
@@ -364,27 +301,26 @@ class AppNB:
             '/main/' + tag + '/workflow.cwl'
 
         proc_dict['inputs'] = []
-        for key in self.inputs:
-            param = self.parameters[key]
+        for param in self.arguments:
             inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
             key_type = Util.GetKeyType(inferred_type, param['default'])
             proc_dict['inputs'].append({
-                'id': key,
+                'id': param['name'], 
                 'title': 'Automatically detected using papermill.',
                 'literalDataDomains': [{'dataType': {'name': key_type}}],
             })
-        for key in self.stage_in:
-            param = self.parameters[key]
+
+        if self.stage_in_param is not None:
             proc_dict['inputs'].append({
-                'id': key,
+                'id': self.stage_in_param['name'],
                 'title': 'Stage-in input specified for URL-to-PATH conversion.',
                 'literalDataDomains': [{'dataType': {'name': 'stage_in'}}],
             })
 
         proc_dict['outputs'] = []
-        for key in self.outputs:
+        if self.stage_out_param is not None:
             proc_dict['outputs'].append({
-                'id': key,
+                'id': self.stage_out_param['name'],
                 'title': 'Automatically detected from .ipynb parsing.',
                 'output': {
                     'formats': [

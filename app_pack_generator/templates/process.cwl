@@ -4,7 +4,7 @@ class: CommandLineTool
 baseCommand:
   - papermill
   - /home/jovyan/process.ipynb
-  - output_nb.ipynb
+  - process_output/output_nb.ipynb
   - -f
   - /tmp/inputs.json
 requirements:
@@ -16,22 +16,25 @@ requirements:
     listing:
       - entryname: /tmp/inputs.json
         entry: $(inputs)
-      - entryname: $(inputs.output_directory)
+      - entryname: process_output
         entry: "$({class: 'Directory', listing: []})"
         writable: true
   InplaceUpdateRequirement:
     inplaceUpdate: true
   NetworkAccess:
     networkAccess: true
-inputs:
-  output_directory: string
+inputs: {}
 outputs:
-  output_dir:
+  process_output_dir:
     outputBinding:
-      glob: $(inputs.output_directory)
+      glob: process_output
     type: Directory
-  output_nb:
+  process_catalog_file:
     outputBinding:
-      glob: output_nb.ipynb
+      glob: process_output/catalog.json
+    type: File
+  process_output_nb:
+    outputBinding:
+      glob: process_output/output_nb.ipynb
     type: File
 stdout: _stdout.txt
