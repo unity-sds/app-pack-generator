@@ -24,7 +24,7 @@ OUTPUT_TAG = 'outputFiles'
 class ApplicationError(Exception):
     pass
 
-class AppNB:
+class ApplicationNotebook:
     """Defines a parsed Jupyter Notebook read as a JSON file."""
 
     def __init__(self, repo, proc=None, templatedir=os.path.join(LOCAL_PATH, 'templates')):
