@@ -176,16 +176,23 @@ class ApplicationNotebook:
         process_dict = self.workflow_cwl['steps']['process']
 
         # Add non stage-in/stage-out inputs to the master CWL input/outputs as parameters
-        input_dict = self.workflow_cwl['inputs']['parameters']['type']['fields']
+        args_input_dict = self.workflow_cwl['inputs']['parameters']['type']['fields']
+        args_default_dict = self.workflow_cwl['inputs']['parameters']['default']
         for param in self.arguments:
             name = param['name']
             inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
-            input_dict[name] = Util.GetKeyType(inferred_type, param['default'])
 
+            # Add argument parameter to workflow input
+            args_input_dict[name] = Util.GetKeyType(inferred_type, param['default'])
+
+            # Connect process step to input argument
             process_dict['in'][name] = {
                 'source': 'parameters',
                 'valueFrom': f'$(self.{name})'
             }
+
+            # Set default value from notebook
+            args_default_dict[name] = param['default']
 
         # Connect the stage-in parameter to stage_in's catalog filename output
         # Otherwise remove stage in from the workflow

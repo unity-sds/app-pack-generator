@@ -51,6 +51,7 @@ inputs:
     type:
       type: record
       fields: {}
+    default: {}
 
 outputs: {}
 
