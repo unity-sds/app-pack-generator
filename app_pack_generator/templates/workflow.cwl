@@ -68,7 +68,7 @@ steps:
         source: stage_in
         valueFrom: $(self.edl_password)
 
-    out: [stage_in_catalog_file, stage_in_download_dir]
+    out: [stage_in_collection_file, stage_in_download_dir]
 
   process:
     run: process.cwl
@@ -77,7 +77,7 @@ steps:
 
     out:
       - process_output_dir
-      - process_catalog_file
+      - process_collection_file
       - process_output_nb
 
   stage_out:
@@ -111,7 +111,7 @@ steps:
       staging_bucket:
         source: stage_out
         valueFrom: $(self.staging_bucket)
-      catalog_file: process/process_catalog_file
+      collection_file: process/process_collection_file
       output_dir: process/process_output_dir
 
     out: [stage_out_results] 

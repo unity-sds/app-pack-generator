@@ -29,7 +29,7 @@ inputs:
     type: string
 
 outputs:
-  stage_in_catalog_file:
+  stage_in_collection_file:
     type: File
     outputBinding:
       glob: download_dir/stage-in-results.json

@@ -104,9 +104,9 @@ class ApplicationNotebook:
         # All parameters parsed from the notebook
         self.parameters = []
 
-        # Parameters labeled for supplying the stage in/stage out STAC catalog file names
-        # The stage in catalog file is written by the stage in step
-        # The stage out catalog file is written by the application
+        # Parameters labeled for supplying the stage in/stage out STAC collection file names
+        # The stage in collection file is written by the stage in step
+        # The stage out collection file is written by the application
         self.stage_in_param = None
         self.stage_out_param = None
 
@@ -254,11 +254,11 @@ class ApplicationNotebook:
                 'valueFrom': f'$(self.{name})',
             }
 
-        # Connect the stage-in parameter to stage_in's catalog filename output
+        # Connect the stage-in parameter to stage_in's collection filename output
         # Otherwise remove stage in from the workflow
         if self.stage_in_param is not None:
             cwl_name = f'{self.stage_in_param.name}_cwl'
-            process_dict['in'][cwl_name] = 'stage_in/stage_in_catalog_file'
+            process_dict['in'][cwl_name] = 'stage_in/stage_in_collection_file'
             process_dict['in']['download_dir'] = 'stage_in/stage_in_download_dir'
         else:
             # No stage-in connected to notebook, delete
@@ -270,7 +270,7 @@ class ApplicationNotebook:
         if self.stage_out_param is None:
             del self.workflow_cwl['steps']['stage_out']
             del self.workflow_cwl['inputs']['stage_out']
-            self.workflow_cwl['steps']['process']['out'].remove('process_catalog_file')
+            self.workflow_cwl['steps']['process']['out'].remove('process_collection_file')
 
         fname = os.path.join(outdir, 'workflow.cwl')
         write_cwl_file(fname, self.workflow_cwl)
@@ -339,10 +339,10 @@ class ApplicationNotebook:
             name = self.stage_out_param.name
             input_dict[name] = {
                 'type': 'string',
-                'default': self.process_cwl['outputs']['process_catalog_file']['outputBinding']['glob'],
+                'default': self.process_cwl['outputs']['process_collection_file']['outputBinding']['glob'],
             }
         else:
-            del self.process_cwl['outputs']['process_catalog_file']
+            del self.process_cwl['outputs']['process_collection_file']
 
         fname = os.path.join(outdir, 'process.cwl')
         write_cwl_file(fname, self.process_cwl)

@@ -32,7 +32,7 @@ requirements:
       DELETE_FILES: 'FALSE'
       GRANULES_SEARCH_DOMAIN: 'UNITY'
       GRANULES_UPLOAD_TYPE: 'CATALOG_S3'
-      CATALOG_FILE: $(inputs.catalog_file.path)
+      CATALOG_FILE: $(inputs.collection_file.path)
 
 inputs:
   aws_region:
@@ -59,7 +59,7 @@ inputs:
     type: string
   staging_bucket:
     type: string
-  catalog_file:
+  collection_file:
     type: File
   output_dir:
     type: Directory

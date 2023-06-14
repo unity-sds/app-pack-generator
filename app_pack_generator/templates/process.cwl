@@ -29,12 +29,12 @@ outputs:
     outputBinding:
       glob: process_output
     type: Directory
-  process_catalog_file:
+  process_collection_file:
     outputBinding:
-      glob: process_output/catalog.json
+      glob: process_output/output_collection.json
     type: File
   process_output_nb:
     outputBinding:
       glob: process_output/output_nb.ipynb
     type: File
-stdout: _stdout.txt
+stdout: stdout.txt
