@@ -257,8 +257,6 @@ class ApplicationNotebook:
         # Connect the stage-in parameter to stage_in's collection filename output
         # Otherwise remove stage in from the workflow
         if self.stage_in_param is not None:
-            cwl_name = f'{self.stage_in_param.name}_cwl'
-            process_dict['in'][cwl_name] = 'stage_in/stage_in_collection_file'
             process_dict['in']['download_dir'] = 'stage_in/stage_in_download_dir'
         else:
             # No stage-in connected to notebook, delete
@@ -314,25 +312,25 @@ class ApplicationNotebook:
                 'default': param.default,
             }
 
-        # Append the stage-in file to the input list with type File for explicit
-        # forwarding from another container. We store the CWL input as a different
-        # name so that we can take advantage of CWL's modification of the File
-        # type into the path on the commandline instead of through the JSON file
-        # of other parameters. The stage in file name gets passed on the command line
-        # with the name specified in the notebook. We must turn off shellQuote
-        # here because of how CWL handles the prefix as a single string. This
-        # means the stage in file name can not contain any spaces.
+        # The download_dir is carried as an input from stage_in to process to
+        # make sure that the contents are exposed to the process container
+        # If we had the stage_in collection filename be an input argument
+        # to process.cwl then it would be volume mounted in a seperate path
+        # and we could not assume that the collection file is in the same
+        # directory as the downloaded results it refers to
+        # Instead we specifically construct the stage in argument to point
+        # to the download directory with the filename mentioned in the stage_in
+        # CWL file. So if we change the filename name in that template it is reflected here
+        # This seems to be the simpilist solution that works other than doing something
+        # complicated using secondaryFiles
         if self.stage_in_param is not None:
-            cwl_name = f'{self.stage_in_param.name}_cwl'
-            input_dict[cwl_name] = {
-                'type': 'File',
-                'inputBinding': {
-                    'prefix': f'-p {self.stage_in_param.name}',
-                    'shellQuote': False,
-                },
-            }
-
             input_dict['download_dir'] = 'Directory'
+
+            stage_in_collection_filename = self.stage_in_cwl['outputs']['stage_in_collection_file']['outputBinding']['glob']
+            self.process_cwl['arguments'] = [
+                '-p', self.stage_in_param.name,
+                f'$(inputs.download_dir.path)/{stage_in_collection_filename}'
+            ]
 
         # Connect the stage-out parameter to the name of the file specified in the template as output
         if self.stage_out_param is not None:
