@@ -7,7 +7,7 @@ stdout: stage-out-results.json
 
 requirements:
   DockerRequirement:
-    dockerPull: ghcr.io/unity-sds/unity-data-services:3.6.1
+    dockerPull: ghcr.io/unity-sds/unity-data-services:4.0.0
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.output_dir)
