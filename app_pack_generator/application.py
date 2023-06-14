@@ -257,8 +257,8 @@ class ApplicationNotebook:
         # Connect the stage-in parameter to stage_in's catalog filename output
         # Otherwise remove stage in from the workflow
         if self.stage_in_param is not None:
-            name = self.stage_in_param.name
-            process_dict['in'][name] = 'stage_in/stage_in_catalog_file'
+            cwl_name = f'{self.stage_in_param.name}_cwl'
+            process_dict['in'][cwl_name] = 'stage_in/stage_in_catalog_file'
             process_dict['in']['download_dir'] = 'stage_in/stage_in_download_dir'
         else:
             # No stage-in connected to notebook, delete
@@ -315,10 +315,22 @@ class ApplicationNotebook:
             }
 
         # Append the stage-in file to the input list with type File for explicit
-        # forwarding from another container
+        # forwarding from another container. We store the CWL input as a different
+        # name so that we can take advantage of CWL's modification of the File
+        # type into the path on the commandline instead of through the JSON file
+        # of other parameters. The stage in file name gets passed on the command line
+        # with the name specified in the notebook. We must turn off shellQuote
+        # here because of how CWL handles the prefix as a single string. This
+        # means the stage in file name can not contain any spaces.
         if self.stage_in_param is not None:
-            name = self.stage_in_param.name
-            input_dict[name] = 'File'
+            cwl_name = f'{self.stage_in_param.name}_cwl'
+            input_dict[cwl_name] = {
+                'type': 'File',
+                'inputBinding': {
+                    'prefix': f'-p {self.stage_in_param.name}',
+                    'shellQuote': False,
+                },
+            }
 
             input_dict['download_dir'] = 'Directory'
 
