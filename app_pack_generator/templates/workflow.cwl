@@ -23,12 +23,8 @@ inputs:
       fields:
         stac_json: File
         download_type: string # DAAC or S3
-        edl_username: string
-        edl_password: string
-    default:
-      download_type: DAAC
-      edl_username: ""
-      edl_password: ""
+        edl_username: [ string, 'null' ]
+        edl_password: [ string, 'null' ]
       
   ###########
   # Stage Out
@@ -36,22 +32,21 @@ inputs:
     type:
       type: record
       fields:
-        collection_id: string
-        aws_access_key_id: string
-        aws_secret_access_key: string
-        aws_session_token: string
-        unity_username: string
-        unity_password: string
-        unity_client_id: string
-        unity_dapa_api: string
-        staging_bucket: string
+        collection_id: [ string, 'null' ]
+        aws_access_key_id: [ string, 'null' ]
+        aws_secret_access_key: [ string, 'null' ]
+        aws_session_token: [ string, 'null' ]
+        unity_username: [ string, 'null' ]
+        unity_password: [ string, 'null' ]
+        unity_client_id: [ string, 'null' ]
+        unity_dapa_api: [ string, 'null' ]
+        staging_bucket: [ string, 'null' ]
 
   # Workflow
   parameters:
     type:
       type: record
       fields: {}
-    default: {}
 
 outputs: {}
 

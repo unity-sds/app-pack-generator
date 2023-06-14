@@ -8,8 +8,6 @@ import papermill
 import jsonschema
 from tabulate import tabulate
 
-from .util import Util
-
 logger = logging.getLogger(__name__)
 
 """
@@ -20,6 +18,75 @@ SCHEMA_LIST = [os.path.join(LOCAL_PATH,
                             'schemas/nbformat.v4.{v}.schema.json'.format(v=i)) for i in range(0, 6)]
 INPUT_TAG = 'parameters'
 OUTPUT_TAG = 'outputFiles'
+
+
+def write_cwl_file(fname, target):
+    """Writes [target] dictionary to a .cwl file with filename [fname]."""
+
+    with open(fname, 'w', encoding='utf-8') as f:
+        f.write("#!/usr/bin/env cwl-runner\n")
+        yaml.dump(target, f, default_flow_style=False)
+
+class ApplicationParameter(object):
+    def __init__(self, papermill_info):
+
+        self.papermill_info = papermill_info
+
+    @property
+    def name(self):
+        return self.papermill_info['name']
+
+    @property
+    def inferred_type(self):
+
+        if self.papermill_info['inferred_type_name'] != 'None':
+            return self.papermill_info['inferred_type_name']
+        elif len(self.papermill_info['help']) > 0:
+            return self.papermill_info['help'] 
+        else:
+            return type(self.default).__name__
+
+    @property
+    def default(self):
+        return eval(self.papermill_info['default'])
+
+    @property
+    def cwl_type(self):
+        """Attempts to convert the inferred type to an equivalent CWL type.
+
+        Otherwise, checks if a given key's default value is a string or can be converted to a float."""
+
+        inferred_type = self.inferred_type
+
+        # Use papermill version of default since we will massage default into 
+        # a Python type
+        default_val = self.papermill_info['default']
+
+        inferred_type = inferred_type.lower()
+        convert_dict = {
+            'string': ['stage_in', 'stage-in', 'string'],
+            'File': ['stage_out', 'stage-out', 'file'],
+            'int': ['int', 'integer'],
+            'boolean': ['bool', 'boolean'],
+            'float': ['float'],
+            'double': ['double'],
+            'Directory': ['directory'],
+            'Any': ['any'],
+            'null': ['nonetype'],
+        }
+        for key in convert_dict:
+            if inferred_type in convert_dict[key]:
+                return key
+
+        if default_val.find('"') != -1 or default_val.find('\'') != -1:
+            return 'string'
+        key_type = 'Any'
+        try:
+            temp = float(default_val)
+            key_type = 'float'
+        except ValueError:
+            pass
+        return key_type
 
 class ApplicationError(Exception):
     pass
@@ -35,7 +102,7 @@ class ApplicationNotebook:
         self.notebook = {}
 
         # All parameters parsed from the notebook
-        self.parameters = {}
+        self.parameters = []
 
         # Parameters labeled for supplying the stage in/stage out STAC catalog file names
         # The stage in catalog file is written by the stage in step
@@ -112,40 +179,37 @@ class ApplicationNotebook:
             raise ApplicationError(f'Failed to validate "{nb_fname}" as a v4.0 - v4.5 Jupyter Notebook...')
 
         # Inspect notebook parameters using papermill and parse them into a list.
-        self.parameters = papermill.inspect_notebook(nb_fname)
+        self.parameters = []
+        for papermill_param in papermill.inspect_notebook(nb_fname).values():
+            app_param = ApplicationParameter(papermill_param)
+            self.parameters.append(app_param)
 
-        for param in self.parameters.values():
-            inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
+            inferred_type = app_param.inferred_type
 
             if inferred_type in ['stage-in', 'stage_in']:
                 if self.stage_in_param is None:
-                    self.stage_in_param = param
+                    self.stage_in_param = app_param
                 else:
                     raise ApplicationError(f"Only one stage-in parameter allowed per notebook")
 
             elif inferred_type in ['stage-out', 'stage_out']:
                 if self.stage_out_param is None:
-                    self.stage_out_param = param
+                    self.stage_out_param = app_param
                 else:
                     raise ApplicationError(f"Only one stage-out parameter allowed per notebook")
             else:
-                self.arguments.append(param)
+                self.arguments.append(app_param)
 
     def parameter_summary(self):
 
-        # Derive header for table from results from papermill directly by adding all the keys found to the header
-        headers = []
-        for param_info in self.parameters.values():
-            for info_name in param_info.keys():
-                if info_name not in headers:
-                    headers.append(info_name)
+        headers = [ 'name', 'inferred_type', 'cwl_type', 'default' ]
 
         # Build up rows of the table using the header values as the columns
         table_data = []
-        for param_info in self.parameters.values():
+        for app_param in self.parameters:
             table_row = []
             for column_name in headers:
-                table_row.append(param_info[column_name])
+                table_row.append(getattr(app_param, column_name))
             table_data.append(table_row)
 
         return tabulate(table_data, headers=headers)
@@ -177,27 +241,23 @@ class ApplicationNotebook:
 
         # Add non stage-in/stage-out inputs to the master CWL input/outputs as parameters
         args_input_dict = self.workflow_cwl['inputs']['parameters']['type']['fields']
-        args_default_dict = self.workflow_cwl['inputs']['parameters']['default']
         for param in self.arguments:
-            name = param['name']
-            inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
+            name = param.name
 
-            # Add argument parameter to workflow input
-            args_input_dict[name] = Util.GetKeyType(inferred_type, param['default'])
+            # Add argument parameter to workflow input, allow null values so that default parameters 
+            # from the notebook can be used
+            args_input_dict[name] = [ 'null', param.cwl_type ]
 
-            # Connect process step to input argument
+            # Connect process step to input argument with the default coming from the notebook's value
             process_dict['in'][name] = {
                 'source': 'parameters',
-                'valueFrom': f'$(self.{name})'
+                'valueFrom': f'$(self.{name})',
             }
-
-            # Set default value from notebook
-            args_default_dict[name] = param['default']
 
         # Connect the stage-in parameter to stage_in's catalog filename output
         # Otherwise remove stage in from the workflow
         if self.stage_in_param is not None:
-            name = self.stage_in_param['name']
+            name = self.stage_in_param.name
             process_dict['in'][name] = 'stage_in/stage_in_catalog_file'
             process_dict['in']['download_dir'] = 'stage_in/stage_in_download_dir'
         else:
@@ -213,7 +273,7 @@ class ApplicationNotebook:
             self.workflow_cwl['steps']['process']['out'].remove('process_catalog_file')
 
         fname = os.path.join(outdir, 'workflow.cwl')
-        Util.WriteYMLFile(fname, self.workflow_cwl)
+        write_cwl_file(fname, self.workflow_cwl)
         return fname
 
     def generate_stage_in_cwl(self, outdir):
@@ -226,7 +286,7 @@ class ApplicationNotebook:
 
         # Generate the stage-in CWL as is, no need for modification
         fname = os.path.join(outdir, 'stage_in.cwl')
-        Util.WriteYMLFile(fname, self.stage_in_cwl)
+        write_cwl_file(fname, self.stage_in_cwl)
         return fname
 
     def generate_process_cwl(self, outdir, dockerurl):
@@ -247,21 +307,24 @@ class ApplicationNotebook:
         # Forward the ordinary argument parameters to the process step directly
         input_dict = self.process_cwl['inputs']
         for param in self.arguments:
-            name = param['name']
-            inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
-            input_dict[name] = Util.GetKeyType(inferred_type, param['default'])
+            name = param.name
+
+            input_dict[name] = {
+                'type': param.cwl_type,
+                'default': param.default,
+            }
 
         # Append the stage-in file to the input list with type File for explicit
         # forwarding from another container
         if self.stage_in_param is not None:
-            name = self.stage_in_param['name']
+            name = self.stage_in_param.name
             input_dict[name] = 'File'
 
             input_dict['download_dir'] = 'Directory'
 
         # Connect the stage-out parameter to the name of the file specified in the template as output
         if self.stage_out_param is not None:
-            name = self.stage_out_param['name']
+            name = self.stage_out_param.name
             input_dict[name] = {
                 'type': 'string',
                 'default': self.process_cwl['outputs']['process_catalog_file']['outputBinding']['glob'],
@@ -270,7 +333,7 @@ class ApplicationNotebook:
             del self.process_cwl['outputs']['process_catalog_file']
 
         fname = os.path.join(outdir, 'process.cwl')
-        Util.WriteYMLFile(fname, self.process_cwl)
+        write_cwl_file(fname, self.process_cwl)
         return fname
 
     def generate_stage_out_cwl(self, outdir):
@@ -283,7 +346,7 @@ class ApplicationNotebook:
 
         # Generate the outputs CWL as-is, no need for modifications
         fname = os.path.join(outdir, 'stage_out.cwl')
-        Util.WriteYMLFile(fname, self.stage_out_cwl)
+        write_cwl_file(fname, self.stage_out_cwl)
         return fname
 
     def generate_descriptor(self, outdir, dockerurl):
@@ -309,17 +372,16 @@ class ApplicationNotebook:
 
         proc_dict['inputs'] = []
         for param in self.arguments:
-            inferred_type = param['inferred_type_name'] if param['inferred_type_name'] != 'None' else param['help']
-            key_type = Util.GetKeyType(inferred_type, param['default'])
+            key_type = param.cwl_type
             proc_dict['inputs'].append({
-                'id': param['name'], 
+                'id': param.name, 
                 'title': 'Automatically detected using papermill.',
                 'literalDataDomains': [{'dataType': {'name': key_type}}],
             })
 
         if self.stage_in_param is not None:
             proc_dict['inputs'].append({
-                'id': self.stage_in_param['name'],
+                'id': self.stage_in_param.name,
                 'title': 'Stage-in input specified for URL-to-PATH conversion.',
                 'literalDataDomains': [{'dataType': {'name': 'stage_in'}}],
             })
@@ -327,7 +389,7 @@ class ApplicationNotebook:
         proc_dict['outputs'] = []
         if self.stage_out_param is not None:
             proc_dict['outputs'].append({
-                'id': self.stage_out_param['name'],
+                'id': self.stage_out_param.name,
                 'title': 'Automatically detected from .ipynb parsing.',
                 'output': {
                     'formats': [
