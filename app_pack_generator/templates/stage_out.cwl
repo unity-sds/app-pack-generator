@@ -32,7 +32,7 @@ requirements:
       DELETE_FILES: 'FALSE'
       GRANULES_SEARCH_DOMAIN: 'UNITY'
       GRANULES_UPLOAD_TYPE: 'CATALOG_S3'
-      CATALOG_FILE: $(inputs.collection_file.path)
+      CATALOG_FILE: 'catalog.json'
 
 inputs:
   aws_region:
@@ -40,27 +40,34 @@ inputs:
     default: us-west-2
   aws_access_key_id:
     type: string
+    default: ''
   aws_secret_access_key:
     type: string
+    default: ''
   aws_session_token:
     type: string
+    default: ''
   unity_username:
     type: string
+    default: ''
   unity_password:
     type: string
+    default: ''
   unity_client_id:
     type: string
+    default: ''
   unity_cognito_url:
     type: string
     default: https://cognito-idp.us-west-2.amazonaws.com
   unity_dapa_api:
     type: string
+    default: ''
   collection_id:
     type: string
+    default: ''
   staging_bucket:
     type: string
-  collection_file:
-    type: File
+    default: ''
   output_dir:
     type: Directory
 

@@ -77,7 +77,6 @@ steps:
 
     out:
       - process_output_dir
-      - process_collection_file
       - process_output_nb
 
   stage_out:
@@ -111,7 +110,6 @@ steps:
       staging_bucket:
         source: stage_out
         valueFrom: $(self.staging_bucket)
-      collection_file: process/process_collection_file
       output_dir: process/process_output_dir
 
     out: [stage_out_results] 

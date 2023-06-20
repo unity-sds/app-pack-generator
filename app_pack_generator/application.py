@@ -337,7 +337,7 @@ class ApplicationNotebook:
             name = self.stage_out_param.name
             input_dict[name] = {
                 'type': 'string',
-                'default': self.process_cwl['outputs']['process_collection_file']['outputBinding']['glob'],
+                'default': self.process_cwl['outputs']['process_output_dir']['outputBinding']['glob'],
             }
         else:
             del self.process_cwl['outputs']['process_collection_file']
