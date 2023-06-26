@@ -41,14 +41,16 @@ class ApplicationParameter(object):
 
         if self.papermill_info['inferred_type_name'] != 'None':
             return self.papermill_info['inferred_type_name']
-        elif len(self.papermill_info['help']) > 0:
-            return self.papermill_info['help'] 
         else:
             return type(self.default).__name__
 
     @property
     def default(self):
         return eval(self.papermill_info['default'])
+
+    @property
+    def help(self):
+        return self.papermill_info['help'] 
 
     @property
     def cwl_type(self):
@@ -202,7 +204,7 @@ class ApplicationNotebook:
 
     def parameter_summary(self):
 
-        headers = [ 'name', 'inferred_type', 'cwl_type', 'default' ]
+        headers = [ 'name', 'inferred_type', 'cwl_type', 'default', 'help' ]
 
         # Build up rows of the table using the header values as the columns
         table_data = []
