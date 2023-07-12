@@ -47,9 +47,9 @@ example_argument_bool = True
 example_argument_empty = None # type: string Allow a null value or a string
 ```
 
-Not that a comment can still be provided but it must be given after the type name. If a value is specified with the None it will be come an `Any` type inside of the generated CWL unless a type hint is provided. Parameters like the above are passed to the generated CWL through a parameters block in the CWL job input file. For example, the following JSON would be part of the job input file for the above parameters:
+Not that a comment can still be provided but it must be given after the type name. If a value is specified with the None it will be come an `Any` type inside of the generated CWL unless a type hint is provided. Parameters like the above are passed to the generated CWL through a parameters block in the CWL job input file. For example, the following YAML would be part of the job input file for the above parameters:
 
-```json
+```yaml
 parameters:
     example_argument_string: "string"
     example_argument_int: 1
