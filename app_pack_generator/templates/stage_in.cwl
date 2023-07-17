@@ -5,7 +5,7 @@ baseCommand: ["DOWNLOAD"]
 
 requirements:
   DockerRequirement:
-    dockerPull: ghcr.io/unity-sds/unity-data-services:4.0.0
+    dockerPull: ghcr.io/unity-sds/unity-data-services:5.2.1
   EnvVarRequirement:
     envDef:
       DOWNLOAD_DIR: $(runtime.outdir)
@@ -15,8 +15,11 @@ requirements:
       EDL_USERNAME: $(inputs.edl_username)
       EDL_PASSWORD: $(inputs.edl_password)
       EDL_PASSWORD_TYPE: 'BASE64'
-      LOG_LEVEL: '20'
       OUTPUT_FILE: $(runtime.outdir)/stage-in-results.json
+      LOG_LEVEL: '20'
+      PARALLEL_COUNT: '-1'
+      DOWNLOAD_RETRY_WAIT_TIME: '30'
+      DOWNLOAD_RETRY_TIMES: '5'
 
 inputs:
   download_type:

@@ -33,13 +33,10 @@ inputs:
       type: record
       fields:
         collection_id: [ string, 'null' ]
+        aws_region: [ string, 'null' ]
         aws_access_key_id: [ string, 'null' ]
         aws_secret_access_key: [ string, 'null' ]
         aws_session_token: [ string, 'null' ]
-        unity_username: [ string, 'null' ]
-        unity_password: [ string, 'null' ]
-        unity_client_id: [ string, 'null' ]
-        unity_dapa_api: [ string, 'null' ]
         staging_bucket: [ string, 'null' ]
 
   # Workflow
@@ -92,18 +89,6 @@ steps:
       aws_session_token:
         source: stage_out
         valueFrom: $(self.aws_session_token)
-      unity_username:
-        source: stage_out
-        valueFrom: $(self.unity_username)
-      unity_password: 
-        source: stage_out
-        valueFrom: $(self.unity_password)
-      unity_client_id:
-        source: stage_out
-        valueFrom: $(self.unity_client_id)
-      unity_dapa_api:
-        source: stage_out
-        valueFrom: $(self.unity_dapa_api)
       collection_id:
         source: stage_out
         valueFrom: $(self.collection_id)
