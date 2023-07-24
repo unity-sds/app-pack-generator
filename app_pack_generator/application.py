@@ -1,4 +1,5 @@
 import os
+import re
 import copy
 import json
 import logging
@@ -329,20 +330,28 @@ class ApplicationNotebook:
             input_dict['download_dir'] = 'Directory'
 
             stage_in_collection_filename = self.stage_in_cwl['outputs']['stage_in_collection_file']['outputBinding']['glob']
-            self.process_cwl['arguments'] = [
+            self.process_cwl['arguments'] = self.process_cwl.get('arguments', [])
+            self.process_cwl['arguments'] += [
                 '-p', self.stage_in_param.name,
                 f'$(inputs.download_dir.path)/{stage_in_collection_filename}'
             ]
 
         # Connect the stage-out parameter to the name of the file specified in the template as output
+        # That value should contain a full path by using $(runtime.outdir)
         if self.stage_out_param is not None:
-            name = self.stage_out_param.name
-            input_dict[name] = {
-                'type': 'string',
-                'default': self.process_cwl['outputs']['process_output_dir']['outputBinding']['glob'],
-            }
+            stage_out_process_dir = self.process_cwl['outputs']['process_output_dir']['outputBinding']['glob']
+
+            if not re.search('runtime.outdir', stage_out_process_dir):
+                raise ApplicationError(f"The process CWL template outputs/process_output_dir path needs to contain $(runtime.outdir) in the path")
+
+            self.process_cwl['arguments'] = self.process_cwl.get('arguments', [])
+            self.process_cwl['arguments'] += [
+                '-p', self.stage_out_param.name, 
+                stage_out_process_dir
+            ]
+
         else:
-            del self.process_cwl['outputs']['process_collection_file']
+            del self.process_cwl['outputs']['process_output_dir']
 
         fname = os.path.join(outdir, 'process.cwl')
         write_cwl_file(fname, self.process_cwl)

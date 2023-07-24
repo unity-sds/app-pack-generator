@@ -4,6 +4,8 @@ class: CommandLineTool
 baseCommand:
   - papermill
   - /home/jovyan/process.ipynb
+  - --cwd
+  - /home/jovyan
   - process_output/output_nb.ipynb
   - -f
   - /tmp/inputs.json
@@ -27,10 +29,10 @@ inputs: {}
 outputs:
   process_output_dir:
     outputBinding:
-      glob: process_output
+      glob: "$(runtime.outdir)/process_output"
     type: Directory
   process_output_nb:
     outputBinding:
-      glob: process_output/output_nb.ipynb
+      glob: "$(runtime.outdir)/process_output/output_nb.ipynb"
     type: File
 stdout: stdout.txt
