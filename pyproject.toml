@@ -26,11 +26,11 @@ classifiers = [
 ]
 
 requires-python = ">=3.9"
-version = "0.2.0"
-dynamic = ["dependencies"]
+dynamic = ["dependencies", "version"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
+version = {attr = "app_pack_generator.version.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]
