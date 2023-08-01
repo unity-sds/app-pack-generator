@@ -45,7 +45,10 @@ inputs:
       type: record
       fields: {}
 
-outputs: {}
+outputs:
+  stage_out_results:
+    type: File
+    outputSource: stage_out/stage_out_results  
 
 steps:
   stage_in:
