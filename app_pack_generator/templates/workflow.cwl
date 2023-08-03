@@ -25,6 +25,7 @@ inputs:
         download_type: string # DAAC or S3
         edl_username: [ string, 'null' ]
         edl_password: [ string, 'null' ]
+        edl_password_type: [ string, 'null' ]
       
   ###########
   # Stage Out
@@ -67,6 +68,9 @@ steps:
       edl_password:
         source: stage_in
         valueFrom: $(self.edl_password)
+      edl_password_type:
+        source: stage_in
+        valueFrom: $(self.edl_password_type)
 
     out: [stage_in_collection_file, stage_in_download_dir]
 

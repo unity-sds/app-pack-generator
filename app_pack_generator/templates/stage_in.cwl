@@ -14,7 +14,7 @@ requirements:
       EDL_BASE_URL: 'https://urs.earthdata.nasa.gov/'
       EDL_USERNAME: $(inputs.edl_username)
       EDL_PASSWORD: $(inputs.edl_password)
-      EDL_PASSWORD_TYPE: 'BASE64'
+      EDL_PASSWORD_TYPE: $(inputs.edl_password_type)
       OUTPUT_FILE: $(runtime.outdir)/stage-in-results.json
       LOG_LEVEL: '20'
       PARALLEL_COUNT: '-1'
@@ -30,6 +30,9 @@ inputs:
     type: string
   edl_password:
     type: string
+  edl_password_type:
+    type: string
+    default: "BASE64"
 
 outputs:
   stage_in_collection_file:
