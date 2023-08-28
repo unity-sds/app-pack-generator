@@ -5,7 +5,7 @@ baseCommand: ["DOWNLOAD"]
 
 requirements:
   DockerRequirement:
-    dockerPull: ghcr.io/unity-sds/unity-data-services:5.2.2
+    dockerPull: ghcr.io/unity-sds/unity-data-services:5.3.1
   EnvVarRequirement:
     envDef:
       DOWNLOAD_DIR: $(runtime.outdir)
