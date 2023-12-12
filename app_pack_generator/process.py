@@ -87,8 +87,6 @@ class CWL(object):
         if self.app.stage_out_param is None:
             del self.workflow_cwl['steps']['stage_out']
             del self.workflow_cwl['inputs']['stage_out']
-            self.workflow_cwl['steps']['process']['out'].remove('process_collection_file')
-
             del self.workflow_cwl['outputs']['stage_out_results']
 
         fname = os.path.join(outdir, 'workflow.cwl')
