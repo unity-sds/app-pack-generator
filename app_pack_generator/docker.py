@@ -10,20 +10,18 @@ logger = logging.getLogger(__name__)
 
 class DockerUtil:
 
-    def __init__(self, git_mgr, repo_config=None, do_prune=True):
+    def __init__(self, git_mgr, repo_config=None, do_prune=True, use_owner=True):
         self.git_mgr = git_mgr
         self.repo_config = repo_config
         self.do_prune = do_prune
+        self.use_owner = use_owner
 
         self.docker_client = docker.from_env()
-        #username = os.getenv('DOCKER_USER')
-        #password = os.getenv('DOCKER_PASS')
-        #self.docker_client.login(username=username, password=password)
 
     @property
     def image_tag(self):
 
-        if self.git_mgr.owner is not None:
+        if self.git_mgr.owner is not None and self.use_owner:
             image_tag = self.git_mgr.owner + '/' + self.git_mgr.name
         else:
             image_tag = self.git_mgr.name 
