@@ -9,6 +9,7 @@ requirements:
   EnvVarRequirement:
     envDef:
       DOWNLOAD_DIR: $(runtime.outdir)
+      DOWNLOADING_KEYS: $(inputs.downloading_keys) 
       STAC_JSON: $(inputs.stac_json.path)
       GRANULES_DOWNLOAD_TYPE: $(inputs.download_type)
       EDL_BASE_URL: 'https://urs.earthdata.nasa.gov/'
@@ -33,6 +34,9 @@ inputs:
   edl_password_type:
     type: string
     default: "BASE64"
+  downloading_keys:
+    type: string
+    default: "data, metadata"
 
 outputs:
   stage_in_collection_file:
