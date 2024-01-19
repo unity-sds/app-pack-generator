@@ -26,6 +26,7 @@ inputs:
         edl_username: [ string, 'null' ]
         edl_password: [ string, 'null' ]
         edl_password_type: [ string, 'null' ]
+        downloading_keys: [ string, 'null' ]
       
   ###########
   # Stage Out
@@ -71,6 +72,9 @@ steps:
       edl_password_type:
         source: stage_in
         valueFrom: $(self.edl_password_type)
+      downloading_keys:
+        source: stage_in
+        valueFrom: $(self.downloading_keys)
 
     out: [stage_in_collection_file, stage_in_download_dir]
 
