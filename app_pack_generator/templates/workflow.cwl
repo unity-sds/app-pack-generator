@@ -27,6 +27,8 @@ inputs:
         edl_password: [ string, 'null' ]
         edl_password_type: [ string, 'null' ]
         downloading_keys: [ string, 'null' ]
+        downloading_roles: [ string, 'null' ]
+
       
   ###########
   # Stage Out
@@ -50,7 +52,13 @@ inputs:
 outputs:
   stage_out_results:
     type: File
-    outputSource: stage_out/stage_out_results  
+    outputSource: stage_out/stage_out_results 
+  stage_out_success:
+    type: File
+    outputSource: stage_out/successful_features
+  stage_out_failures:
+    type: File
+    outputSource: stage_out/failed_features 
 
 steps:
   stage_in:
@@ -75,6 +83,10 @@ steps:
       downloading_keys:
         source: stage_in
         valueFrom: $(self.downloading_keys)
+      downloading_roles:
+        source: stage_in
+        valueFrom: $(self.downloading_roles)
+
 
     out: [stage_in_collection_file, stage_in_download_dir]
 
@@ -108,4 +120,4 @@ steps:
         valueFrom: $(self.staging_bucket)
       output_dir: process/process_output_dir
 
-    out: [stage_out_results] 
+    out: [stage_out_results, successful_features, failed_features] 

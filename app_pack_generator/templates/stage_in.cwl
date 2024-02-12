@@ -1,49 +1,51 @@
-cwlVersion: v1.2
+#!/usr/bin/env cwl-runner
+baseCommand:
+- DOWNLOAD
 class: CommandLineTool
-
-baseCommand: ["DOWNLOAD"]
-
-requirements:
-  DockerRequirement:
-    dockerPull: ghcr.io/unity-sds/unity-data-services:5.3.1
-  EnvVarRequirement:
-    envDef:
-      DOWNLOAD_DIR: $(runtime.outdir)
-      DOWNLOADING_KEYS: $(inputs.downloading_keys) 
-      STAC_JSON: $(inputs.stac_json.path)
-      GRANULES_DOWNLOAD_TYPE: $(inputs.download_type)
-      EDL_BASE_URL: 'https://urs.earthdata.nasa.gov/'
-      EDL_USERNAME: $(inputs.edl_username)
-      EDL_PASSWORD: $(inputs.edl_password)
-      EDL_PASSWORD_TYPE: $(inputs.edl_password_type)
-      OUTPUT_FILE: $(runtime.outdir)/stage-in-results.json
-      LOG_LEVEL: '20'
-      PARALLEL_COUNT: '-1'
-      DOWNLOAD_RETRY_WAIT_TIME: '30'
-      DOWNLOAD_RETRY_TIMES: '5'
-
+cwlVersion: v1.2
 inputs:
   download_type:
     type: string
-  stac_json:
-    type: File
-  edl_username:
+  downloading_keys:
+    default: data, metadata
+    type: string
+  downloading_roles:
+    default: data, metadata
     type: string
   edl_password:
     type: string
   edl_password_type:
+    default: BASE64
     type: string
-    default: "BASE64"
-  downloading_keys:
+  edl_username:
     type: string
-    default: "data, metadata"
-
+  stac_json:
+    type: File
 outputs:
   stage_in_collection_file:
-    type: File
     outputBinding:
       glob: stage-in-results.json
+    type: File
   stage_in_download_dir:
-    type: Directory
     outputBinding:
       glob: .
+    type: Directory
+requirements:
+  DockerRequirement:
+    dockerPull: ghcr.io/unity-sds/unity-data-services:6.4.3
+  EnvVarRequirement:
+    envDef:
+      DOWNLOADING_KEYS: $(inputs.downloading_keys)
+      DOWNLOADING_ROLES: $(inputs.downloading_roles)
+      DOWNLOAD_DIR: $(runtime.outdir)
+      DOWNLOAD_RETRY_TIMES: '5'
+      DOWNLOAD_RETRY_WAIT_TIME: '30'
+      EDL_BASE_URL: https://urs.earthdata.nasa.gov/
+      EDL_PASSWORD: $(inputs.edl_password)
+      EDL_PASSWORD_TYPE: $(inputs.edl_password_type)
+      EDL_USERNAME: $(inputs.edl_username)
+      GRANULES_DOWNLOAD_TYPE: $(inputs.download_type)
+      LOG_LEVEL: '20'
+      OUTPUT_FILE: $(runtime.outdir)/stage-in-results.json
+      PARALLEL_COUNT: '-1'
+      STAC_JSON: $(inputs.stac_json.path)

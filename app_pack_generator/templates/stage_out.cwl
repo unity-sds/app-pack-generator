@@ -1,53 +1,63 @@
-cwlVersion: v1.2
+#!/usr/bin/env cwl-runner
+baseCommand:
+- UPLOAD
 class: CommandLineTool
-
-baseCommand: ["UPLOAD"]
-
-stdout: stage-out-results.json
-
-requirements:
-  DockerRequirement:
-    dockerPull: ghcr.io/unity-sds/unity-data-services:5.3.1
-  InitialWorkDirRequirement:
-    listing:
-    - entry: $(inputs.output_dir)
-      entryname: /tmp/outputs
-  EnvVarRequirement:
-    envDef:
-      AWS_REGION: $(inputs.aws_region)
-      AWS_ACCESS_KEY_ID: $(inputs.aws_access_key_id)
-      AWS_SECRET_ACCESS_KEY: $(inputs.aws_secret_access_key)
-      AWS_SESSION_TOKEN: $(inputs.aws_session_token)
-
-      COLLECTION_ID: $(inputs.collection_id)
-      STAGING_BUCKET: $(inputs.staging_bucket)
-      CATALOG_FILE: '/tmp/outputs/catalog.json'
-      OUTPUT_FILE: '$(runtime.outdir)/stage-out-results.json'
-
+cwlVersion: v1.2
 inputs:
-  aws_region:
-    type: string
-    default: us-west-2
   aws_access_key_id:
-    type: string
     default: ''
+    type: string
+  aws_region:
+    default: us-west-2
+    type: string
   aws_secret_access_key:
-    type: string
     default: ''
+    type: string
   aws_session_token:
-    type: string
     default: ''
+    type: string
   collection_id:
-    type: string
     default: ''
-  staging_bucket:
     type: string
-    default: ''
   output_dir:
     type: Directory
-
+  staging_bucket:
+    default: ''
+    type: string
 outputs:
   stage_out_results:
     type: File
     outputBinding:
       glob: "$(runtime.outdir)/stage-out-results.json"
+  successful_features:
+    type: File
+    outputBinding:
+      glob: "$(runtime.outdir)/successful_features.json"
+  failed_features:
+    type: File
+    outputBinding:
+      glob: "$(runtime.outdir)/failed_features.json"
+requirements:
+  DockerRequirement:
+    dockerPull: ghcr.io/unity-sds/unity-data-services:6.4.3
+  EnvVarRequirement:
+    envDef:
+      AWS_ACCESS_KEY_ID: $(inputs.aws_access_key_id)
+      AWS_REGION: $(inputs.aws_region)
+      AWS_SECRET_ACCESS_KEY: $(inputs.aws_secret_access_key)
+      AWS_SESSION_TOKEN: $(inputs.aws_session_token)
+      #CATALOG_FILE: /tmp/outputs/catalog.json
+      
+      COLLECTION_ID: $(inputs.collection_id)
+      STAGING_BUCKET: $(inputs.staging_bucket)
+      CATALOG_FILE: '$(inputs.output_dir.path)/catalog.json'
+      OUTPUT_FILE: '$(runtime.outdir)/stage-out-results.json'
+      LOG_LEVEL: '10'
+      PARALLEL_COUNT: '2'
+      OUTPUT_DIRECTORY: $(runtime.outdir)
+      
+  InitialWorkDirRequirement:
+    listing:
+    - entry: $(inputs.output_dir)
+      entryname: /tmp/outputs
+stdout: stage-out-results.json
