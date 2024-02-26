@@ -4,6 +4,7 @@ baseCommand:
 class: CommandLineTool
 cwlVersion: v1.2
 inputs:
+  # S3 or DAAC or HTTP
   download_type:
     type: string
   downloading_keys:
@@ -14,13 +15,39 @@ inputs:
     type: string
   edl_password:
     type: string
+    default: '/sps/processing/workflows/edl_password'
   edl_password_type:
-    default: BASE64
+    default: 'PARAM_STORE'
     type: string
   edl_username:
+    default: '/sps/processing/workflows/edl_username'
     type: string
   stac_json:
-    type: File
+    type: string 
+
+# DAPA auth
+  unity_username:
+    default: '/sps/processing/workflows/unity_username'
+    type: string
+  unity_password:
+    default: '/sps/processing/workflows/unity_password'
+    type: string
+  unity_type: 
+    default: 'PARAM_STORE'
+    type: string
+  unity_client_id: 
+    type: string
+  unity_cognito: 
+    type: string
+    default: 'https://cognito-idp.us-west-2.amazonaws.com'
+  unity_ssl:
+    type: string
+    default: 'TRUE'
+  # NONE or UNITY
+  unity_stac_auth:
+    type: string
+    default: 'NONE'
+     
 outputs:
   stage_in_collection_file:
     outputBinding:
@@ -48,4 +75,16 @@ requirements:
       LOG_LEVEL: '20'
       OUTPUT_FILE: $(runtime.outdir)/stage-in-results.json
       PARALLEL_COUNT: '-1'
-      STAC_JSON: $(inputs.stac_json.path)
+      #what if this is a string?
+      STAC_JSON: $(inputs.stac_json) 
+
+      USERNAME: $(inputs.unity_username)
+      PASSWORD: $(inputs.unity_password)
+      PASSWORD_TYPE: $(inputs.unity_type)
+      CLIENT_ID: $(inputs.unity_client_id)
+      COGNITO_URL: $(inputs.unity_cognito)
+      VERIFY_SSL: $(inputs.unity_ssl)
+      
+      #'UNITY | NONE'
+      STAC_AUTH_TYPE: $(inputs.unity_stac_auth)
+      

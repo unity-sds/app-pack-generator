@@ -21,14 +21,15 @@ inputs:
     type:
       type: record
       fields:
-        stac_json: File
+        stac_json: string 
         download_type: string # DAAC or S3
         edl_username: [ string, 'null' ]
         edl_password: [ string, 'null' ]
         edl_password_type: [ string, 'null' ]
         downloading_keys: [ string, 'null' ]
         downloading_roles: [ string, 'null' ]
-
+        unity_client_id: string
+        unity_stac_auth: string # UNITY or NONE
       
   ###########
   # Stage Out
@@ -86,7 +87,12 @@ steps:
       downloading_roles:
         source: stage_in
         valueFrom: $(self.downloading_roles)
-
+      unity_client_id:
+        source: stage_in
+        valueFrom: $(self.unity_client_id)
+      unity_stac_auth:
+        source: stage_in
+        valueFrom: $(self.unity_stac_auth)
 
     out: [stage_in_collection_file, stage_in_download_dir]
 
