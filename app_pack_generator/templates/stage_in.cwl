@@ -60,42 +60,51 @@ outputs:
       glob: .
     type: Directory
 requirements:
-  InlineJavascriptRequirement
+  InlineJavascriptRequirement: {}
   DockerRequirement:
     dockerPull: ghcr.io/unity-sds/unity-data-services:6.4.3
   EnvVarRequirement:
-    envDef:
-      DOWNLOADING_KEYS: $(inputs.downloading_keys)
-      DOWNLOADING_ROLES: $(inputs.downloading_roles)
-      DOWNLOAD_DIR: $(runtime.outdir)
-      DOWNLOAD_RETRY_TIMES: '5'
-      DOWNLOAD_RETRY_WAIT_TIME: '30'
-      EDL_BASE_URL: https://urs.earthdata.nasa.gov/
-      EDL_PASSWORD: $(inputs.edl_password)
-      EDL_PASSWORD_TYPE: $(inputs.edl_password_type)
-      EDL_USERNAME: $(inputs.edl_username)
-      GRANULES_DOWNLOAD_TYPE: $(inputs.download_type)
-      LOG_LEVEL: '20'
-      OUTPUT_FILE: $(runtime.outdir)/stage-in-results.json
-      PARALLEL_COUNT: '-1'
-      #what if this is a string?
-      STAC_JSON: |
-      ${
-        if (inputs.stac_json == Object){
-          return inputs.stac_json.path; 
-        }
-        else{
-          return inputs.stac_json;
-        }
-      } #$(inputs.stac_json) 
-
-      USERNAME: $(inputs.unity_username)
-      PASSWORD: $(inputs.unity_password)
-      PASSWORD_TYPE: $(inputs.unity_type)
-      CLIENT_ID: $(inputs.unity_client_id)
-      COGNITO_URL: $(inputs.unity_cognito)
-      VERIFY_SSL: $(inputs.unity_ssl)
-      
-      #'UNITY | NONE'
-      STAC_AUTH_TYPE: $(inputs.unity_stac_auth)
-      
+    envDef: 
+      -  envName: CLIENT_ID
+         envValue: $(inputs.unity_client_id)
+      -  envName: COGNITO_URL 
+         envValue: $(inputs.unity_cognito)
+      -  envName: DOWNLOADING_KEYS
+         envValue: $(inputs.downloading_keys)
+      -  envName: DOWNLOADING_ROLES
+         envValue: $(inputs.downloading_roles)
+      -  envName: DOWNLOAD_DIR
+         envValue: $(runtime.outdir)
+      -  envName: DOWNLOAD_RETRY_TIMES
+         envValue: '5'
+      -  envName: DOWNLOAD_RETRY_WAIT_TIME
+         envValue: '30'
+      -  envName: EDL_BASE_URL
+         envValue: https://urs.earthdata.nasa.gov/
+      -  envName: EDL_PASSWORD
+         envValue: $(inputs.edl_password)
+      -  envName: EDL_PASSWORD_TYPE
+         envValue: $(inputs.edl_password_type)
+      -  envName: EDL_USERNAME
+         envValue: $(inputs.edl_username)
+      -  envName: GRANULES_DOWNLOAD_TYPE
+         envValue: $(inputs.download_type)
+      -  envName: LOG_LEVEL
+         envValue: '20'
+      -  envName: OUTPUT_FILE
+         envValue: $(runtime.outdir)/stage-in-results.json
+      -  envName: PARALLEL_COUNT
+         envValue: '-1'
+      -  envName: PASSWORD
+         envValue: $(inputs.unity_password)
+      -  envName: PASSWORD_TYPE
+         envValue: $(inputs.unity_type)
+      -  envName: STAC_AUTH_TYPE
+         envValue: $(inputs.unity_stac_auth)
+      -  envName: USERNAME
+         envValue: $(inputs.unity_username)
+      -  envName: VERIFY_SSL
+         envValue: $(inputs.unity_ssl)
+      -  envName: STAC_JSON
+         envValue: "${\n console.log(typeof inputs.stac_json);\n if (typeof inputs.stac_json === 'object'){\n    return inputs.stac_json.path;\n\
+        \  }\n  else{\n    return inputs.stac_json;\n  }\n}\n"
