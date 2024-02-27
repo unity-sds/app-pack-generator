@@ -21,7 +21,7 @@ inputs:
     type:
       type: record
       fields:
-        stac_json: string 
+        stac_json: [string, File]
         download_type: string # DAAC or S3
         edl_username: [ string, 'null' ]
         edl_password: [ string, 'null' ]

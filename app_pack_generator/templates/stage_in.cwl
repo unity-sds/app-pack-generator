@@ -23,7 +23,9 @@ inputs:
     default: '/sps/processing/workflows/edl_username'
     type: string
   stac_json:
-    type: string 
+    type: 
+    - string
+    - File 
 
 # DAPA auth
   unity_username:
@@ -58,6 +60,7 @@ outputs:
       glob: .
     type: Directory
 requirements:
+  InlineJavascriptRequirement
   DockerRequirement:
     dockerPull: ghcr.io/unity-sds/unity-data-services:6.4.3
   EnvVarRequirement:
@@ -76,7 +79,15 @@ requirements:
       OUTPUT_FILE: $(runtime.outdir)/stage-in-results.json
       PARALLEL_COUNT: '-1'
       #what if this is a string?
-      STAC_JSON: $(inputs.stac_json) 
+      STAC_JSON: |
+      ${
+        if (inputs.stac_json == Object){
+          return inputs.stac_json.path; 
+        }
+        else{
+          return inputs.stac_json;
+        }
+      } #$(inputs.stac_json) 
 
       USERNAME: $(inputs.unity_username)
       PASSWORD: $(inputs.unity_password)
