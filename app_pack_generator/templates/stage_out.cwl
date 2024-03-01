@@ -52,8 +52,8 @@ requirements:
       STAGING_BUCKET: $(inputs.staging_bucket)
       CATALOG_FILE: '$(inputs.output_dir.path)/catalog.json'
       OUTPUT_FILE: '$(runtime.outdir)/stage-out-results.json'
-      LOG_LEVEL: '10'
-      PARALLEL_COUNT: '2'
+      LOG_LEVEL: '20'
+      PARALLEL_COUNT: '-1'
       OUTPUT_DIRECTORY: $(runtime.outdir)
       
   InitialWorkDirRequirement:
