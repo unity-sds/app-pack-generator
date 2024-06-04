@@ -1,6 +1,7 @@
 import os
 import requests
 import logging
+import subprocess
 
 import docker
 
@@ -79,9 +80,12 @@ class DockerUtil:
             cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
                    '--no-run', '--debug', '--image-name', self.image_tag, self.git_mgr.directory]
 
-        process = Util.System(cmd)
-        logger.debug(process.stdout)
-        logger.debug(process.stderr)
+        try:
+            r2d_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, universal_newlines=True)
+            logger.debug(r2d_output)
+        except subprocess.CalledProcessError as exc:
+            logger.error(exc.output)
+            raise exc
 
         return self.image_tag
 

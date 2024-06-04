@@ -1,14 +1,8 @@
 import requests
 import datetime
-import subprocess
 import yaml
 
 class Util:
-    @staticmethod
-    def System(cmd):
-        """Runs a terminal commands with the specified command."""
-        return subprocess.run(cmd,
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
     @staticmethod
     def TimeFunction(func, *args, **kwargs):
