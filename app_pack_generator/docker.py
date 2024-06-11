@@ -105,6 +105,8 @@ class DockerUtil:
 
         for line in self.docker_client.images.push(reg_image_dest, stream=True, decode=True):
             logger.debug(line)
+            if 'errorDetail' in line:
+                raise Exception(f"Error pushing {image_tag} to {reg_image_dest}:" + line['errorDetail']['message'])
 
         if self.do_prune:
             self.docker_client.images.remove(image.id, force=True)
