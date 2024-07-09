@@ -24,6 +24,9 @@ inputs:
   staging_bucket:
     default: ''
     type: string
+  result_path_prefix:
+    default: ''
+    type: string
 outputs:
   stage_out_results:
     type: File
@@ -39,7 +42,7 @@ outputs:
       glob: "$(runtime.outdir)/failed_features.json"
 requirements:
   DockerRequirement:
-    dockerPull: ghcr.io/unity-sds/unity-data-services:6.4.3
+    dockerPull: ghcr.io/unity-sds/unity-data-services:7.9.0
   EnvVarRequirement:
     envDef:
       AWS_ACCESS_KEY_ID: $(inputs.aws_access_key_id)
@@ -50,6 +53,7 @@ requirements:
       
       COLLECTION_ID: $(inputs.collection_id)
       STAGING_BUCKET: $(inputs.staging_bucket)
+      RESULT_PATH_PREFIX: $(inputs.result_path_prefix)
       CATALOG_FILE: '$(inputs.output_dir.path)/catalog.json'
       OUTPUT_FILE: '$(runtime.outdir)/stage-out-results.json'
       LOG_LEVEL: '20'

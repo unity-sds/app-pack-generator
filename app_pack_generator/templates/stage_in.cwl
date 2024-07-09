@@ -62,7 +62,7 @@ outputs:
 requirements:
   InlineJavascriptRequirement: {}
   DockerRequirement:
-    dockerPull: ghcr.io/unity-sds/unity-data-services:6.4.3
+    dockerPull: ghcr.io/unity-sds/unity-data-services:7.9.0
   EnvVarRequirement:
     envDef: 
       -  envName: CLIENT_ID

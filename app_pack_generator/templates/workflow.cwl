@@ -43,6 +43,7 @@ inputs:
         aws_secret_access_key: [ string, 'null' ]
         aws_session_token: [ string, 'null' ]
         staging_bucket: [ string, 'null' ]
+        result_path_prefix: [ string, 'null' ]
 
   # Workflow
   parameters:
@@ -124,6 +125,9 @@ steps:
       staging_bucket:
         source: stage_out
         valueFrom: $(self.staging_bucket)
+      result_path_prefix:
+        source: stage_out
+        valueFrom: $(self.result_path_prefix)
       output_dir: process/process_output_dir
 
     out: [stage_out_results, successful_features, failed_features] 
