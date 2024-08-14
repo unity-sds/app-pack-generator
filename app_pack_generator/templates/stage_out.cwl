@@ -42,7 +42,7 @@ outputs:
       glob: "$(runtime.outdir)/failed_features.json"
 requirements:
   DockerRequirement:
-    dockerPull: ghcr.io/unity-sds/unity-data-services:7.10.1
+    dockerPull: ghcr.io/unity-sds/unity-data-services:7.12.2
   EnvVarRequirement:
     envDef:
       AWS_ACCESS_KEY_ID: $(inputs.aws_access_key_id)
