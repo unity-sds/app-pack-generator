@@ -16,7 +16,10 @@ inputs:
   aws_session_token:
     default: ''
     type: string
-  collection_id:
+  project:
+    default: ''
+    type: string
+  venue:
     default: ''
     type: string
   output_dir:
@@ -42,7 +45,7 @@ outputs:
       glob: "$(runtime.outdir)/failed_features.json"
 requirements:
   DockerRequirement:
-    dockerPull: ghcr.io/unity-sds/unity-data-services:7.12.2
+    dockerPull: ghcr.io/unity-sds/unity-data-services:9.4.0
   EnvVarRequirement:
     envDef:
       AWS_ACCESS_KEY_ID: $(inputs.aws_access_key_id)
@@ -51,7 +54,9 @@ requirements:
       AWS_SESSION_TOKEN: $(inputs.aws_session_token)
       #CATALOG_FILE: /tmp/outputs/catalog.json
       
-      COLLECTION_ID: $(inputs.collection_id)
+      PROJECT: $(inputs.project)
+      VENUE: $(inputs.venue)
+
       STAGING_BUCKET: $(inputs.staging_bucket)
       RESULT_PATH_PREFIX: $(inputs.result_path_prefix)
       CATALOG_FILE: '$(inputs.output_dir.path)/catalog.json'

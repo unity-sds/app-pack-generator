@@ -37,7 +37,8 @@ inputs:
     type:
       type: record
       fields:
-        collection_id: [ string, 'null' ]
+        project: [ string, 'null' ]
+        venue: [ string, 'null' ]
         aws_region: [ string, 'null' ]
         aws_access_key_id: [ string, 'null' ]
         aws_secret_access_key: [ string, 'null' ]
