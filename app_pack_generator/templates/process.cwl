@@ -9,6 +9,7 @@ baseCommand:
   - process_output/output_nb.ipynb
   - -f
   - /tmp/inputs.json
+  - --log-output
 requirements:
   DockerRequirement:
     dockerPull: marjoluc/hello-world:stable
@@ -35,4 +36,3 @@ outputs:
     outputBinding:
       glob: "$(runtime.outdir)/process_output/output_nb.ipynb"
     type: File
-stdout: stdout.txt
