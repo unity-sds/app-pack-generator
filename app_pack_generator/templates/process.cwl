@@ -10,6 +10,8 @@ baseCommand:
   - -f
   - /tmp/inputs.json
   - --log-output
+  - -k
+  - python3
 requirements:
   DockerRequirement:
     dockerPull: marjoluc/hello-world:stable
