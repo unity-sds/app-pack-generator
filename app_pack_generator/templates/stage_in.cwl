@@ -53,7 +53,7 @@ inputs:
 outputs:
   stage_in_collection_file:
     outputBinding:
-      glob: stage-in-results.json
+      glob: catalog.json
     type: File
   stage_in_download_dir:
     outputBinding:
@@ -92,7 +92,7 @@ requirements:
       -  envName: LOG_LEVEL
          envValue: '20'
       -  envName: OUTPUT_FILE
-         envValue: $(runtime.outdir)/stage-in-results.json
+         envValue: $(runtime.outdir)/catalog.json
       -  envName: PARALLEL_COUNT
          envValue: '-1'
       -  envName: PASSWORD
