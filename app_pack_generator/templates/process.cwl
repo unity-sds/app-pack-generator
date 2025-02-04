@@ -6,7 +6,7 @@ baseCommand:
   - /home/jovyan/process.ipynb
   - --cwd
   - /home/jovyan
-  - process_output/output_nb.ipynb
+  - output_nb.ipynb
   - -f
   - /tmp/inputs.json
   - --log-output
@@ -21,20 +21,20 @@ requirements:
     listing:
       - entryname: /tmp/inputs.json
         entry: $(inputs)
-      - entryname: process_output
-        entry: "$({class: 'Directory', listing: []})"
-        writable: true
   InplaceUpdateRequirement:
     inplaceUpdate: true
   NetworkAccess:
     networkAccess: true
-inputs: {}
+inputs:
+  # Where the incoming data for the process is placed
+  input: Directory
 outputs:
-  process_output_dir:
+  # Where the process placed outgoing data
+  output:
     outputBinding:
-      glob: "$(runtime.outdir)/process_output"
+      glob: "$(runtime.outdir)"
     type: Directory
   process_output_nb:
     outputBinding:
-      glob: "$(runtime.outdir)/process_output/output_nb.ipynb"
+      glob: "$(runtime.outdir)/output_nb.ipynb"
     type: File

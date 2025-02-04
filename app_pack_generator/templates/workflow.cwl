@@ -104,7 +104,7 @@ steps:
     in: {}
 
     out:
-      - process_output_dir
+      - output
       - process_output_nb
 
   stage_out:
@@ -129,6 +129,6 @@ steps:
       result_path_prefix:
         source: stage_out
         valueFrom: $(self.result_path_prefix)
-      output_dir: process/process_output_dir
+      output_dir: process/output
 
     out: [stage_out_results, successful_features, failed_features] 
