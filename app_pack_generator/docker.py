@@ -99,9 +99,22 @@ class DockerUtil:
 
         reg_image_dest = f"{registry_url}/{image_tag}"
 
-        logger.debug(f"Pushing {image_tag} to {reg_image_dest}")
+        logger.debug(f"Pushing {image_tag} to {reg_image_dest} X")
 
-        image.tag(reg_image_dest)
+        # Use two argument call to .tag() per the API documentation
+        # The Docker API is more lenient that Podman and will
+        # Parse the URL for us if we just supply reg_image_dest
+        # But we need to use the actual documented API to get this working
+        # With Podman
+        # Here image_tag that is passed around internally is really
+        # <repository>:<tag>
+        # https://docker-py.readthedocs.io/en/stable/images.html?highlight=tag#docker.models.images.Image.tag
+        if image_tag.find(":") >= 0:
+            local_repo, local_tag = image_tag.split(":")
+            repository = f"{registry_url}/{local_repo}"
+            image.tag(repository, local_tag)
+        else:
+            image.tag(reg_image_dest)
 
         for line in self.docker_client.images.push(reg_image_dest, stream=True, decode=True):
             logger.debug(line)
