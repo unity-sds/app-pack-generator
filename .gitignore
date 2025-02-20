@@ -4,3 +4,4 @@ build/
 .vs/*
 *.swp
 __pycache__/
+dist/
