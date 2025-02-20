@@ -24,6 +24,12 @@ This library serves as a base upon which to build project specific application g
 - Creates Common Workflow Language (CWL) files that expose the notebook's arguments
 - Creates a Docker image called by the CWL file to execute parsed notebook applications
 
+## Install from PyPi
+
+```
+pip install app-pack-generator
+```
+
 ## Preparing Your repository
 
 Any application repository used by this library must:
