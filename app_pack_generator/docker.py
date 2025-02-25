@@ -7,6 +7,10 @@ import docker
 
 from .util import Util
 
+# Default from docker-py is 60 seconds
+# This was found to be to small when dealing with pushing large images to remote repos like ECR
+DOCKER_CLIENT_TIMEOUT = 600
+
 logger = logging.getLogger(__name__)
 
 class DockerUtil:
@@ -20,7 +24,7 @@ class DockerUtil:
         self.use_repository = use_repository
         self.use_tag = use_tag
 
-        self.docker_client = docker.from_env()
+        self.docker_client = docker.from_env(timeout=DOCKER_CLIENT_TIMEOUT)
 
     @property
     def image_namespace(self):
