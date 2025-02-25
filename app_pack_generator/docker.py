@@ -95,29 +95,34 @@ class DockerUtil:
 
         logger.info(f"Building Docker image named {self.image_reference}")
 
-        if self.repo_config is not None:
-            # A specific repo2docker config file has been specified, see if it exists
-            # relative to the repository path
-            repo_config_local = os.path.join(self.git_mgr.directory, self.repo_config)
+        # Build initial repo2docker command line arguments
+        cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
+               '--no-run', '--debug', '--image-name', self.image_reference]
 
+        if self.repo_config is not None:
             # If the repo2docker config file does not exist inside the repo already, assume it is a URL
             # and try to download it
-            if not os.path.exists(repo_config_local):
+            if not os.path.exists(self.repo_config):
+                repo_config_local = os.path.join(self.git_mgr.directory, os.path.basename(self.repo_config))
+
                 response = Util.DownloadLink(self.repo_config)
                 if response is not None:
                     with open(os.path.join(repo_config_local), 'w') as f:
                         f.write(response.text)
                 else:
-                    msg = 'Failed to download the specified configuration file: ' + REPO2DOCKER_ENV
+                    msg = 'Failed to download the specified configuration file: ' + self.repo_config
                     raise RuntimeError(msg)
+            else:
+                repo_config_local = self.repo_config
 
-            cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-                   '--no-run', '--debug', '--image-name', self.image_reference, '--config',
-                   repo_config_local, self.git_mgr.directory]
-        else:
-            # Let repo2docker find the config to use automatically
-            cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-                   '--no-run', '--debug', '--image-name', self.image_reference, self.git_mgr.directory]
+            cmd += ['--config', repo_config_local]
+
+        # The repository must be the last argument to repo2docker
+        cmd += [self.git_mgr.directory]
+
+        #, self.git_mgr.directory]
+        logger.debug("Executing repo2docker with command line:")
+        logger.debug(" ".join(cmd))
 
         try:
             r2d_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, universal_newlines=True)
