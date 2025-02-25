@@ -119,7 +119,7 @@ class ApplicationNotebook(ApplicationInterface):
         if not os.path.exists(notebook_filename):
             raise ApplicationError(f"Could not find notebook file: {notebook_filename}")
 
-        logger.debug(f'Reading notebook: "{notebook_filename}"')
+        logger.info(f'Reading notebook: "{notebook_filename}"')
         with open(notebook_filename, 'r') as f:
             self.notebook = json.load(f)
 

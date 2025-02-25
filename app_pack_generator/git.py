@@ -26,7 +26,7 @@ class GitManager(object):
             if not os.path.exists(os.path.join(source, ".git")):
                 raise GitRepoError(f"In order for destination to be left empty {source} needs to be an existing git repository")
 
-            logger.debug(f"Using existing Git repository from source path {source}")
+            logger.info(f"Using existing Git repository from source path {source}")
             self.repo = git.Repo(source)
 
         elif os.path.exists(os.path.join(dest, ".git")):
@@ -35,7 +35,7 @@ class GitManager(object):
             if os.path.exists(source) and not source == dest:
                 raise GitRepoError(f"Source {source} is not a URL but destination path {dest} is an existing git repository")
 
-            logger.debug(f"Using existing Git repository from destination path {dest} with source {source}")
+            logger.info(f"Using existing Git repository from destination path {dest} with source {source}")
             self.repo = git.Repo(dest)
 
         elif os.path.exists(dest) and os.path.isfile(dest):
@@ -49,7 +49,7 @@ class GitManager(object):
         else:
             # Hopefully by this point we have a source that is a directory or a URL and destination
             # is an empty or non existent directory
-            logger.debug(f"Cloning Git repository from {source} to {dest}")
+            logger.info(f"Cloning Git repository from {source} to {dest}")
 
             self.repo = git.Repo.clone_from(source, dest)
 
