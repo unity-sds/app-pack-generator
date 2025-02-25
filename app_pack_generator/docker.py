@@ -7,30 +7,52 @@ import docker
 
 from .util import Util
 
+# Default from docker-py is 60 seconds
+# This was found to be to small when dealing with pushing large images to remote repos like ECR
+DOCKER_CLIENT_TIMEOUT = 600
+
 logger = logging.getLogger(__name__)
 
 class DockerUtil:
 
-    def __init__(self, git_mgr, repo_config=None, do_prune=True, use_owner=True):
+    def __init__(self, git_mgr, repo_config=None, do_prune=True, use_namespace=None, use_repository=None, use_tag=None):
         self.git_mgr = git_mgr
         self.repo_config = repo_config
         self.do_prune = do_prune
-        self.use_owner = use_owner
 
-        self.docker_client = docker.from_env()
+        self.use_namespace = use_namespace
+        self.use_repository = use_repository
+        self.use_tag = use_tag
+
+        self.docker_client = docker.from_env(timeout=DOCKER_CLIENT_TIMEOUT)
+
+    @property
+    def image_namespace(self):
+        "namespace portion of a Docker image reference string"
+
+        if self.use_namespace is not None:
+            return self.use_namespace
+
+        if self.git_mgr.owner is not None:
+            return self.git_mgr.owner
+
+    @property
+    def image_repository(self):
+        "namespace portion of a Docker image reference string"
+
+        if self.use_repository is not None:
+            return self.use_repository
+
+        return self.git_mgr.name
 
     @property
     def image_tag(self):
+        "tag portion of a Docker image reference string"
 
-        if self.git_mgr.owner is not None and self.use_owner:
-            image_tag = self.git_mgr.owner + '/' + self.git_mgr.name
-        else:
-            image_tag = self.git_mgr.name 
+        if self.use_tag is not None:
+            return self.use_tag
 
-        if len(image_tag) > 128:
-            image_tag = image_tag[0:128]
-
-        image_tag += ':' + self.git_mgr.commit_identifier
+        image_tag = self.git_mgr.commit_identifier
 
         # Clean up image_tag to confirm to Docker rules
         # 1. Make sure all characters are lower case
@@ -39,6 +61,23 @@ class DockerUtil:
         image_tag = image_tag.replace('..', '.')
 
         return image_tag
+
+    @property
+    def image_reference(self):
+        """
+        A Docker image reference consists of several components that describe where the image is stored and its identity. These components are:
+
+        [HOST[:PORT]/]NAMESPACE/REPOSITORY[:TAG]
+
+        https://docs.docker.com/reference/cli/docker/image/tag/
+
+        HOST:PORT are added in push_image
+        """
+
+        if self.image_namespace is not None and self.image_namespace != "":
+            return f"{self.image_namespace}/{self.image_repository}:{self.image_tag}"
+        else:
+            return f"{self.image_repository}:{self.image_tag}"
 
     def repo2docker(self):
         """Calls repo2docker on the local git directory to generate the Docker image.
@@ -54,7 +93,7 @@ class DockerUtil:
             except requests.exceptions.ReadTimeout as e:
                 logger.error('An error occurred while pruning: {}'.format(e.what()))
 
-        logger.debug(f"Building Docker image named {self.image_tag}")
+        logger.info(f"Building Docker image named {self.image_reference}")
 
         if self.repo_config is not None:
             # A specific repo2docker config file has been specified, see if it exists
@@ -73,12 +112,12 @@ class DockerUtil:
                     raise RuntimeError(msg)
 
             cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-                   '--no-run', '--debug', '--image-name', self.image_tag, '--config',
+                   '--no-run', '--debug', '--image-name', self.image_reference, '--config',
                    repo_config_local, self.git_mgr.directory]
         else:
             # Let repo2docker find the config to use automatically
             cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-                   '--no-run', '--debug', '--image-name', self.image_tag, self.git_mgr.directory]
+                   '--no-run', '--debug', '--image-name', self.image_reference, self.git_mgr.directory]
 
         try:
             r2d_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, universal_newlines=True)
@@ -87,39 +126,45 @@ class DockerUtil:
             logger.error(exc.output)
             raise exc
 
-        return self.image_tag
+        return self.image_reference
 
-    def push_image(self, registry_url, image_tag=None):
+    def build_image(self):
+        "Use instead of calling the repo2docker function since it could possibly be deprecated in the future"
 
-        if image_tag is None:
-            image_tag = self.image_tag
+        return self.repo2docker()
+
+    def push_image(self, registry_url, image_reference=None):
+        "Pushes the Docker image created by the build_image command into a remote registry with an optional different image reference string"
+
+        if image_reference is None:
+            image_reference = self.image_reference
 
         # Save the newly created image to a tarball if the build succeeded.
-        image = self.docker_client.images.get(image_tag)
+        image = self.docker_client.images.get(image_reference)
 
-        reg_image_dest = f"{registry_url}/{image_tag}"
+        reg_image_dest = f"{registry_url}/{image_reference}"
 
-        logger.debug(f"Pushing {image_tag} to {reg_image_dest} X")
+        logger.info(f"Pushing {image_reference} to {reg_image_dest}")
 
         # Use two argument call to .tag() per the API documentation
         # The Docker API is more lenient that Podman and will
         # Parse the URL for us if we just supply reg_image_dest
         # But we need to use the actual documented API to get this working
         # With Podman
-        # Here image_tag that is passed around internally is really
-        # <repository>:<tag>
+        #
         # https://docker-py.readthedocs.io/en/stable/images.html?highlight=tag#docker.models.images.Image.tag
-        if image_tag.find(":") >= 0:
-            local_repo, local_tag = image_tag.split(":")
+        if image_reference.find(":") >= 0:
+            local_repo, local_tag = image_reference.split(":")
+
             repository = f"{registry_url}/{local_repo}"
             image.tag(repository, local_tag)
         else:
             image.tag(reg_image_dest)
 
         for line in self.docker_client.images.push(reg_image_dest, stream=True, decode=True):
-            logger.debug(line)
+            logger.info(line)
             if 'errorDetail' in line:
-                raise Exception(f"Error pushing {image_tag} to {reg_image_dest}:" + line['errorDetail']['message'])
+                raise Exception(f"Error pushing {image_reference} to {reg_image_dest}:" + line['errorDetail']['message'])
 
         if self.do_prune:
             self.docker_client.images.remove(image.id, force=True)
