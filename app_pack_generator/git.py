@@ -30,10 +30,6 @@ class GitManager(object):
             self.repo = git.Repo(source)
 
         elif os.path.exists(os.path.join(dest, ".git")):
-            # If destination an existing git repository only allow is the source does not exist meaning it is likely a URL
-            # passed for information purposes
-            if os.path.exists(source) and not source == dest:
-                raise GitRepoError(f"Source {source} is not a URL but destination path {dest} is an existing git repository")
 
             logger.info(f"Using existing Git repository from destination path {dest} with source {source}")
             self.repo = git.Repo(dest)
