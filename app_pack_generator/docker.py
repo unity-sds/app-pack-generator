@@ -41,6 +41,7 @@ class DockerUtil:
         return image_tag
 
     def repo2docker(self):
+        print("graceal1 in repo2docker function")
         """Calls repo2docker on the local git directory to generate the Docker image.
 
         No further modifications are made to the docker image.
@@ -57,9 +58,12 @@ class DockerUtil:
         logger.debug(f"Building Docker image named {self.image_tag}")
 
         if self.repo_config is not None:
+            print("graceal1 self.repo_config is not none")
+            print(self.repo_config)
             # A specific repo2docker config file has been specified, see if it exists
             # relative to the repository path
             repo_config_local = os.path.join(self.git_mgr.directory, self.repo_config)
+            print(repo_config_local)
 
             # If the repo2docker config file does not exist inside the repo already, assume it is a URL
             # and try to download it
@@ -76,9 +80,12 @@ class DockerUtil:
                    '--no-run', '--debug', '--image-name', self.image_tag, '--config',
                    repo_config_local, self.git_mgr.directory]
         else:
+            print("graceal1 repo_config was not specified")
+            print(self.git_mgr.directory)
             # Let repo2docker find the config to use automatically
             cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-                   '--no-run', '--debug', '--image-name', self.image_tag, self.git_mgr.directory]
+                   '--no-run', '--debug', '--image-name', self.image_tag, '--config',
+                   'traitlets.config.json', self.git_mgr.directory]
 
         try:
             r2d_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, universal_newlines=True)
