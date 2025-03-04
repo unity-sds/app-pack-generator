@@ -82,10 +82,13 @@ class DockerUtil:
         else:
             print("graceal1 repo_config was not specified")
             print(self.git_mgr.directory)
+            repo_config_local = os.path.join(self.git_mgr.directory, 'traitlets.config.json')
+            print("graceal1 path to config is ")
+            print(repo_config_local)
             # Let repo2docker find the config to use automatically
             cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
                    '--no-run', '--debug', '--image-name', self.image_tag, '--config',
-                   'traitlets.config.json', self.git_mgr.directory]
+                   repo_config_local, self.git_mgr.directory]
 
         try:
             r2d_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, universal_newlines=True)
