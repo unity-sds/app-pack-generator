@@ -46,6 +46,20 @@ class ProcessCWL(BaseCWL):
         # Template CWL and descriptor files
         self.process_cwl = self._read_template( os.path.join(self.template_dir, 'process.cwl'))
 
+    @property
+    def _workflow(self):
+
+        graph = self.process_cwl['$graph']
+        search_func = lambda d: "class" in d and d["class"] == "Workflow"
+        return next(filter(search_func, graph), None)
+
+    @property
+    def _command_line_tool(self):
+
+        graph = self.process_cwl['$graph']
+        search_func = lambda d: "class" in d and d["class"] == "CommandLineTool"
+        return next(filter(search_func, graph), None)
+
     def generate_all(self, outdir, dockerurl="undefined", **kwargs):
         """Calls all of the application CWL generators as well as the application descriptor generator.
 
@@ -61,57 +75,67 @@ class ProcessCWL(BaseCWL):
         "Connect non stage in/out arguments to papermill parameters"
 
         # Forward the ordinary argument parameters to the process step directly
-        input_dict = self.process_cwl['inputs']
-        for param in self.app.arguments:
-            name = param.name
+        workflow_input_dict = self._workflow['inputs']
+        workflow_process_in_dict = self._workflow['steps']['process']['in']
+        cmd_input_dict = self._command_line_tool['inputs']
 
-            input_dict[name] = {
+        for param in self.app.arguments:
+            param_name = param.name
+
+            param_def = {
                 'type': param.cwl_type,
                 'default': param.default,
             }
 
-    def _insert_input_params(self):
-        "Connects the special 'input' CWL parameter to the papermill parameter for recieving the stage-in directory location"
+            cmd_input_dict[param_name] = param_def.copy()
+            workflow_input_dict[param_name] = param_def.copy()
 
-        input_dict = self.process_cwl['inputs']
+            workflow_process_in_dict[param_name] = param_name
+
+    def _insert_input_params(self):
+        "Connects the special 'input' CWL parameter to the papermill parameter for receiving the stage-in directory location"
+
+        workflow_input_dict = self._workflow['inputs']
+        workflow_process_in_dict = self._workflow['steps']['process']['in']
+        cmd_input_dict = self._command_line_tool['inputs']
         
         # The input Directory is carried as an input from stage_in to process to
         # make sure that the contents are exposed to the process container
         #
         # If we had the stage_in collection filename be an input argument
-        # to process.cwl then it would be volume mounted in a seperate path
+        # to process.cwl then it would be volume mounted in a separate path
         # and we could not assume that the collection file is in the same
         # directory as the staged in results
         if self.app.stage_in_param is not None:
-            input_dict['input'] = 'Directory'
+            param_name = self.app.stage_in_param.name
+            cmd_input_dict[param_name] = 'Directory'
+            workflow_input_dict[param_name] = 'Directory'
 
-            self.process_cwl['arguments'] = self.process_cwl.get('arguments', [])
-            self.process_cwl['arguments'] += [
+            self._command_line_tool['arguments'] = self._command_line_tool.get('arguments', [])
+            self._command_line_tool['arguments'] += [
                 '-p', self.app.stage_in_param.name,
-                f'$(inputs.input.path)'
+                f'$(inputs.{param_name}.path)'
             ]
-    
-    def _insert_output_params(self):
-        "Connects the special 'input' CWL parameter to the papermill parameter for recieving the stage-out directory location"
 
-        # Connect the stage-out parameter to the name of the file specified in the template as output
-        # That value should contain a full path by using $(runtime.outdir)
-        input_dict = self.process_cwl['inputs']
+            workflow_process_in_dict[param_name] = param_name
+
+    def _insert_output_params(self):
+        "Connects the special 'input' CWL parameter to the papermill parameter for receiving the stage-out directory location"
 
         if self.app.stage_out_param is not None:
-            stage_out_process_dir = self.process_cwl['outputs']['output']['outputBinding']['glob']
+            stage_out_process_dir = self._command_line_tool['outputs']['outputs_result']['outputBinding']['glob']
 
             if not re.search('runtime.outdir', stage_out_process_dir):
                 raise CWLError(f"The process CWL template outputs/output path needs to contain $(runtime.outdir) in the path")
 
-            self.process_cwl['arguments'] = self.process_cwl.get('arguments', [])
-            self.process_cwl['arguments'] += [
+            self._command_line_tool['arguments'] = self._command_line_tool.get('arguments', [])
+            self._command_line_tool['arguments'] += [
                 '-p', self.app.stage_out_param.name, 
                 stage_out_process_dir
             ]
 
         else:
-            del self.process_cwl['outputs']['output']
+            del self._command_line_tool['outputs']['output']
 
     def generate_process_cwl(self, outdir, dockerurl):
         """Generates the application CWL.
@@ -122,7 +146,7 @@ class ProcessCWL(BaseCWL):
             os.makedirs(outdir)
 
         # Set correct URL for process Docker container
-        self.process_cwl['requirements']['DockerRequirement']['dockerPull'] = dockerurl
+        self._command_line_tool['requirements']['DockerRequirement']['dockerPull'] = dockerurl
 
         # Forward the ordinary argument parameters to the process step directly
         self._insert_argument_params()
