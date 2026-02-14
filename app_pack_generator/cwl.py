@@ -2,6 +2,7 @@ import os
 import re
 import yaml
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +40,12 @@ class BaseCWL(object):
 
 class ProcessCWL(BaseCWL):
 
-    def __init__(self, application, **kwargs):
+    def __init__(self, application, repo_info, **kwargs):
 
         super().__init__(application, **kwargs)
+        
+        # Used to build metadata
+        self.repo_info = repo_info
 
         # Template CWL and descriptor files
         self.process_cwl = self._read_template( os.path.join(self.template_dir, 'process.cwl'))
@@ -137,6 +141,16 @@ class ProcessCWL(BaseCWL):
         else:
             del self._command_line_tool['outputs']['output']
 
+    def _insert_metadata(self):
+
+        print(dir(self.repo_info))
+        
+        self.process_cwl["s:author"][0]["s:name"] = self.repo_info.owner
+        self.process_cwl["s:citation"] = self.repo_info.source_location
+        self.process_cwl["s:codeRepository"] = self.repo_info.source_location
+        self.process_cwl["s:commitHash"] = self.repo_info.commit_identifier
+        self.process_cwl["s:dateCreated"] = datetime.now().date()
+
     def generate_process_cwl(self, outdir, dockerurl):
         """Generates the application CWL.
 
@@ -154,6 +168,9 @@ class ProcessCWL(BaseCWL):
         # Handle input and output parameters and their connection to papermill arguments
         self._insert_input_params()
         self._insert_output_params()
+
+        # Add metadata on the source repository
+        self._insert_metadata()
 
         fname = os.path.join(outdir, 'process.cwl')
         write_cwl_file(fname, self.process_cwl)

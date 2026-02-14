@@ -59,19 +59,16 @@ $graph:
 
 s:author:
 - class: s:Person
-  s:name: arthurduf
-s:contributor:
-- class: s:Person
-  s:name: arthurduf
-s:citation: https://github.com/MAAP-Project/sardem-sarsen.git
-s:codeRepository: https://github.com/MAAP-Project/sardem-sarsen.git
-s:commitHash: 1f2c57760b5334472b0f9d719dcb09cae99297a7
-s:dateCreated: 2025-12-04
-s:license: https://github.com/MAAP-Project/sardem-sarsen/blob/main/LICENSE
-s:softwareVersion: 1.0.0
-s:version: mlucas_nasa-ogc
+  s:name: mdps-app-generator
+s:citation: ""
+s:codeRepository: ""
+s:commitHash: ""
+s:dateCreated: ""
+s:license: ""
+s:softwareVersion: ""
+s:version: ""
 s:releaseNotes: None
-s:keywords: ogc, sar
+s:keywords: ""
 $namespaces:
   s: https://schema.org/
 $schemas:
