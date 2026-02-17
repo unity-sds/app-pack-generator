@@ -152,6 +152,10 @@ class ProcessCWL(BaseCWL):
 
     def _insert_metadata(self):
 
+        self._workflow['id'] = self.repo_info.name
+        self._workflow['doc'] = f"OGC Application for {self.repo_info.name} built from Jupyter notebook: {os.path.basename(self.app.filename)} from source repository: {self.repo_info.source_location}"
+        self._workflow['label'] = f"OGC Application for {self.repo_info.name}"
+
         self.process_cwl["s:author"][0]["s:name"] = self.repo_info.owner
         self.process_cwl["s:citation"] = self.repo_info.source_location
         self.process_cwl["s:codeRepository"] = self.repo_info.source_location
