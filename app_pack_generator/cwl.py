@@ -89,6 +89,8 @@ class ProcessCWL(BaseCWL):
             param_def = {
                 'type': param.cwl_type,
                 'default': param.default,
+                'label': "argument",
+                'doc': param.help,
             }
 
             cmd_input_dict[param_name] = param_def.copy()
@@ -112,8 +114,15 @@ class ProcessCWL(BaseCWL):
         # directory as the staged in results
         if self.app.stage_in_param is not None:
             param_name = self.app.stage_in_param.name
-            cmd_input_dict[param_name] = 'Directory'
-            workflow_input_dict[param_name] = 'Directory'
+
+            param_def = {
+                'type': "Directory",
+                'label': "stage-in",
+                'doc': self.app.stage_in_param.help,
+            }
+
+            cmd_input_dict[param_name] = param_def.copy()
+            workflow_input_dict[param_name] = param_def.copy()
 
             self._command_line_tool['arguments'] = self._command_line_tool.get('arguments', [])
             self._command_line_tool['arguments'] += [
@@ -143,8 +152,6 @@ class ProcessCWL(BaseCWL):
 
     def _insert_metadata(self):
 
-        print(dir(self.repo_info))
-        
         self.process_cwl["s:author"][0]["s:name"] = self.repo_info.owner
         self.process_cwl["s:citation"] = self.repo_info.source_location
         self.process_cwl["s:codeRepository"] = self.repo_info.source_location
