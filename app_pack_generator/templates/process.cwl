@@ -33,8 +33,7 @@ $graph:
     - python3
   requirements:
     DockerRequirement:
-      dockerPull: marjoluc/hello-world:stable
-    InlineJavascriptRequirement: {}
+      dockerPull: unity-sds/mdps-example-application:latest
     ShellCommandRequirement: {}
     InitialWorkDirRequirement:
       listing:
