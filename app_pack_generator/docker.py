@@ -106,8 +106,11 @@ class DockerUtil:
         logger.info(f"Building Docker image named {self.image_reference}")
 
         # Build initial repo2docker command line arguments
+        # Do not supply the --user-id argument as it will cause
+        # permission issues when the CWL is run using
+        # cwltool with the --no-match-user argument
         cmd = ['jupyter-repo2docker',
-               '--user-id', '1000', '--user-name', 'jovyan',
+               '--user-name', 'jovyan',
                '--no-run', '--debug', 
                '--image-name', self.image_reference]
 
