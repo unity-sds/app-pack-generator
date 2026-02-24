@@ -4,6 +4,7 @@ import attrs
 import logging
 
 import papermill
+
 import jsonschema
 from tabulate import tabulate
 
@@ -96,6 +97,9 @@ class ApplicationInterface(object):
     # Free arguments that are papermill parameters not associated with stage
     arguments: list[ApplicationParameter] = []
 
+    # Keyword value metadata pairs
+    metadata: dict = {}
+
 class ApplicationNotebook(ApplicationInterface):
     """Defines a parsed Jupyter Notebook read as a JSON file."""
 
@@ -110,9 +114,10 @@ class ApplicationNotebook(ApplicationInterface):
         self.notebook_parameters = []
 
         self.filename = notebook_filename
-        self.parse_notebook(notebook_filename)
+        self.parse_notebook_parameters(notebook_filename)
+        self.parse_notebook_metadata(notebook_filename)
 
-    def parse_notebook(self, notebook_filename):
+    def parse_notebook_parameters(self, notebook_filename):
         """Parses validate notebook_filename as a valid, existing Jupyter Notebook to
         ensure no exception is thrown.
         """
@@ -167,6 +172,29 @@ class ApplicationNotebook(ApplicationInterface):
             else:
                 self.arguments.append(app_param)
 
+    def parse_notebook_metadata(self, notebook_filename, name=None, language=None):
+        "Use papermill inspection to get a list of keyword/value pairs from a 'metadata' cell"
+
+        nb = papermill.inspection._open_notebook(notebook_filename, parameters=None)
+
+        metadata_cell_idx = papermill.utils.find_first_tagged_cell_index(nb, "metadata")
+        if metadata_cell_idx < 0:
+            return
+
+        metadata_cell = nb.cells[metadata_cell_idx]
+
+        kernel_name = papermill.utils.nb_kernel_name(nb, name)
+        language = papermill.utils.nb_language(nb, language)
+
+        translator = papermill.translators.papermill_translators.find_translator(kernel_name, language)
+        try:
+            metadata = translator.inspect(metadata_cell)
+        except NotImplementedError:
+            logger.warning(f"Translator for '{language}' language does not support parameter introspection.")
+
+        for nb_param in metadata:
+            self.metadata[nb_param.name] = eval(nb_param.default)
+
     def parameter_summary(self):
 
         headers = [ 'name', 'inferred_type', 'cwl_type', 'default', 'help' ]
@@ -178,5 +206,16 @@ class ApplicationNotebook(ApplicationInterface):
             for column_name in headers:
                 table_row.append(getattr(app_param, column_name))
             table_data.append(table_row)
+
+        return tabulate(table_data, headers=headers)
+
+    def metadata_summary(self):
+
+        headers = [ 'name', 'value' ]
+
+        # Build up rows of the table using the header values as the columns
+        table_data = []
+        for key, value in self.metadata.items():
+            table_data.append( (key, value) )
 
         return tabulate(table_data, headers=headers)

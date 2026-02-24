@@ -66,7 +66,7 @@ s:dateCreated: ""
 s:license: ""
 s:softwareVersion: ""
 s:version: ""
-s:releaseNotes: None
+s:releaseNotes: ""
 s:keywords: ""
 $namespaces:
   s: https://schema.org/

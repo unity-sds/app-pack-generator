@@ -3,6 +3,9 @@ import re
 import yaml
 import logging
 from datetime import datetime
+from operator import setitem
+
+from .application import ApplicationNotebook
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +23,7 @@ class CWLError(Exception):
 
 class BaseCWL(object):
 
-    def __init__(self, application, template_dir=os.path.join(LOCAL_PATH, 'templates')):
+    def __init__(self, application : ApplicationNotebook, template_dir=os.path.join(LOCAL_PATH, 'templates')):
 
         self.app = application
         self.template_dir = template_dir
@@ -152,15 +155,62 @@ class ProcessCWL(BaseCWL):
 
     def _insert_metadata(self):
 
-        self._workflow['id'] = self.repo_info.name
-        self._workflow['doc'] = f"OGC Application for {self.repo_info.name} built from Jupyter notebook: {os.path.basename(self.app.filename)} from source repository: {self.repo_info.source_location}"
-        self._workflow['label'] = f"OGC Application for {self.repo_info.name}"
+        # Defines overridable metadata values for the CWL with a setter function and default value
+        # metadata_name: (setter_function, default_value)
+        default_metadata = {
+            'id': (
+                lambda v: setitem(self._workflow, 'id', v), 
+                self.repo_info.name
+            ),
+            'doc': (
+                lambda v: setitem(self._workflow, 'doc', v), 
+                f"OGC Application for {self.repo_info.name} built from Jupyter notebook: {os.path.basename(self.app.filename)} from source repository: {self.repo_info.source_location}"
+            ),
+            'label': (
+                lambda v: setitem(self._workflow, 'label', v), 
+                f"OGC Application for {self.repo_info.name}"
+            ),
+            'author': (
+                lambda v: setitem(self.process_cwl["s:author"][0], "s:name", v), 
+                self.repo_info.owner
+            ),
+            'citation': (
+                lambda v: setitem(self.process_cwl, "s:citation", v), 
+                self.repo_info.source_location
+            ),
+            'codeRepository': (
+                lambda v: setitem(self.process_cwl, "s:codeRepository", v), 
+                self.repo_info.source_location
+            ),
+            'commitHash': (
+                lambda v: setitem(self.process_cwl, "s:commitHash", v), 
+                self.repo_info.commit_identifier
+            ),
+            'dateCreated': (
+                lambda v: setitem(self.process_cwl, "s:dateCreated", v), 
+                datetime.now().date()
+            ),
+            'version': (
+                lambda v: setitem(self.process_cwl, "s:version", v), 
+                "0.1.0"
+            ),
+            'softwareVersion': (
+                lambda v: setitem(self.process_cwl, "s:softwareVersion", v), 
+                "0.1.0"
+            ),
+        }
 
-        self.process_cwl["s:author"][0]["s:name"] = self.repo_info.owner
-        self.process_cwl["s:citation"] = self.repo_info.source_location
-        self.process_cwl["s:codeRepository"] = self.repo_info.source_location
-        self.process_cwl["s:commitHash"] = self.repo_info.commit_identifier
-        self.process_cwl["s:dateCreated"] = datetime.now().date()
+        # Process all metadata values with a default value
+        for keyword, (setter, default_value) in default_metadata.items():
+            if keyword in self.app.metadata:
+                setter(self.app.metadata[keyword])
+            else:
+                setter(default_value)
+
+        # Process additional metadata that is not in the list of default values
+        for keyword in self.app.metadata:
+            if keyword not in default_metadata:
+                self.process_cwl[f"s:{keyword}"] = self.app.metadata[keyword]
 
     def generate_process_cwl(self, outdir, dockerurl):
         """Generates the application CWL.
