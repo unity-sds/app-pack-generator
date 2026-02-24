@@ -17,14 +17,11 @@ $graph:
       in: {}
       out:
       - outputs_result
-      - process_output_nb
 - class: CommandLineTool
   id: main
   baseCommand:
     - papermill
     - /home/jovyan/process.ipynb
-    - --cwd
-    - /home/jovyan
     - output_nb.ipynb
     - -f
     - /tmp/inputs.json
@@ -51,10 +48,6 @@ $graph:
       outputBinding:
         glob: "$(runtime.outdir)"
       type: Directory
-    process_output_nb:
-      outputBinding:
-        glob: "$(runtime.outdir)/output_nb.ipynb"
-      type: File
 
 s:author:
 - class: s:Person
