@@ -46,7 +46,7 @@ $graph:
     # Where the process placed outgoing data
     outputs_result:
       outputBinding:
-        glob: "$(runtime.outdir)"
+        glob: "."
       type: Directory
 
 s:author:

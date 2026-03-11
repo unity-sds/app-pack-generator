@@ -141,9 +141,6 @@ class ProcessCWL(BaseCWL):
         if self.app.stage_out_param is not None:
             stage_out_process_dir = self._command_line_tool['outputs']['outputs_result']['outputBinding']['glob']
 
-            if not re.search('runtime.outdir', stage_out_process_dir):
-                raise CWLError(f"The process CWL template outputs/output path needs to contain $(runtime.outdir) in the path")
-
             self._command_line_tool['arguments'] = self._command_line_tool.get('arguments', [])
             self._command_line_tool['arguments'] += [
                 '-p', self.app.stage_out_param.name, 
