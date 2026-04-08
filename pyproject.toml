@@ -3,7 +3,7 @@ requires = ["setuptools>=62.6.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "app_pack_generator"
+name = "ogc_ipynb_app_gen"
 authors = [ 
     { name = "James McDuffie" },
     { name = "Max Zhan" },
@@ -30,7 +30,7 @@ dynamic = ["dependencies", "version"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
-version = {attr = "app_pack_generator.version.__version__"}
+version = {attr = "ogc_ipynb_app_gen.version.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]

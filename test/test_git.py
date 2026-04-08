@@ -3,7 +3,7 @@ import git
 
 import pytest
 
-from app_pack_generator import GitManager, GitRepoError
+from ogc_ipynb_app_gen import GitManager, GitRepoError
 
 def init_empty_repo(path):
     repo = git.Repo.init(path)

@@ -3,7 +3,7 @@ import os
 import docker
 import pytest
 
-from app_pack_generator import GitManager, DockerUtil
+from ogc_ipynb_app_gen import GitManager, DockerUtil
 
 def test_docker_build(tmp_path, example_app_git_url):
     
