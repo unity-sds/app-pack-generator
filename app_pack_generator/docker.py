@@ -79,6 +79,16 @@ class DockerUtil:
         else:
             return f"{self.image_repository}:{self.image_tag}"
 
+    def image_source(self):
+        source = self.git_mgr.source_location
+
+        # If the source is from Github thenuse the parsed owner
+        # and repo name to properly set up package linking
+        if "github.com" in source:
+            source = f"https://github.com/{self.git_mgr.owner}/{self.git_mgr.name}"
+
+        return source
+
     def repo2docker(self):
         """Calls repo2docker on the local git directory to generate the Docker image.
 
@@ -96,8 +106,21 @@ class DockerUtil:
         logger.info(f"Building Docker image named {self.image_reference}")
 
         # Build initial repo2docker command line arguments
-        cmd = ['jupyter-repo2docker', '--user-id', '1000', '--user-name', 'jovyan',
-               '--no-run', '--debug', '--image-name', self.image_reference]
+        # Do not supply the --user-id argument as it will cause
+        # permission issues when the CWL is run using
+        # cwltool with the --no-match-user argument
+        cmd = ['jupyter-repo2docker',
+               '--user-name', 'jovyan',
+               '--no-run', '--debug', 
+               '--image-name', self.image_reference]
+
+        # Add repo source when appropriate
+        # Used by GHCR to connect a package to a repo
+        # https://docs.github.com/en/packages/learn-github-packages/connecting-a-repository-to-a-package#connecting-a-repository-to-a-container-image-using-the-command-line
+        source = self.image_source()
+        if source is not None:
+            cmd += [ '--label', 
+                    f'org.opencontainers.image.source={source}' ]
 
         if self.repo_config is not None:
             # If the repo2docker config file does not exist inside the repo already, assume it is a URL
