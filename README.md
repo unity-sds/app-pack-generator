@@ -13,9 +13,9 @@
 
 <!-- Header block for project -->
 
-This library serves as a base upon which to build project specific application generation software. For example the [Unity Project](https://github.com/unity-sds/) uses this libary for their [Unity specific application genetation software](https://github.com/unity-sds/unity-app-generator). 
+This library serves as a base upon which to build project specific application generation software. For example the [Unity Project](https://github.com/unity-sds/) uses this libary for their [Unity specific application genetation software](https://github.com/unity-sds/mdps-app-generator). 
 
-[unity-app-generator](https://github.com/unity-sds/unity-app-generator) |  [unity-example-application](https://github.com/unity-sds/unity-example-application)
+[mdps-app-generator](https://github.com/unity-sds/mdps-app-generator) |  [unity-example-application](https://github.com/unity-sds/unity-example-application)
 
 ## Features
 
@@ -27,7 +27,7 @@ This library serves as a base upon which to build project specific application g
 ## Install from PyPi
 
 ```
-pip install app-pack-generator
+pip install ogc-ipynb-app-gen
 ```
 
 ## Preparing Your repository

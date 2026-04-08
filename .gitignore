@@ -1,5 +1,5 @@
 env/
-app_pack_generator.egg-info/
+ogc_ipynb_app_gen.egg-info/
 build/
 .vs/*
 *.swp
